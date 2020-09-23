@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="DeepFool for binary classifiers定义 $f:R^n\rightarrow R$ 是图像的两类分类器，$\hat k(x) &#x3D; sign(f(x))$，$F&#x3D;{x:f(x)&#x3D;0}$。首先分析 $f$ 是线性分类器的情况：   定义 $f$ 在点 $x_0$ 的鲁棒性为 $\Delta(x_0,f)^2$，即 $x_0$ 到决策边界的距离：   扰动的闭式解为：   现在">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[CVPR2016] DeepFool: a simple and accurate method to fool deep neural networks">
+<meta property="og:url" content="http://yoursite.com/2020/08/23/CVPR2016-DeepFool-a-simple-and-accurate-method-to-fool-deep-neural-networks/index.html">
+<meta property="og:site_name" content="zhbli">
+<meta property="og:description" content="DeepFool for binary classifiers定义 $f:R^n\rightarrow R$ 是图像的两类分类器，$\hat k(x) &#x3D; sign(f(x))$，$F&#x3D;{x:f(x)&#x3D;0}$。首先分析 $f$ 是线性分类器的情况：   定义 $f$ 在点 $x_0$ 的鲁棒性为 $\Delta(x_0,f)^2$，即 $x_0$ 到决策边界的距离：   扰动的闭式解为：   现在">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://i.loli.net/2020/08/24/GejKp2rxlbiNzEQ.png">
+<meta property="og:image" content="https://i.loli.net/2020/08/23/e9YAjzF74EZDmd2.png">
+<meta property="og:image" content="https://i.loli.net/2020/08/23/O8bQsTNimoaGJjU.png">
+<meta property="og:image" content="https://i.loli.net/2020/08/23/EjRwk2WvMlHdguy.png">
+<meta property="og:image" content="https://i.loli.net/2020/08/24/ZqD6whGgTPdrc8U.png">
+<meta property="og:image" content="https://i.loli.net/2020/08/24/gfKUwSHbzpJt2lC.png">
+<meta property="og:image" content="https://i.loli.net/2020/08/24/opxzSnUshLjlWFg.png">
+<meta property="og:image" content="https://i.loli.net/2020/08/24/1NXWPlr7Q8tMETB.png">
+<meta property="og:image" content="https://i.loli.net/2020/08/24/aEYbjOFl6zJRDXf.png">
+<meta property="og:image" content="https://i.loli.net/2020/08/24/Zb4RWHsOmvGyjqA.png">
+<meta property="og:image" content="https://i.loli.net/2020/08/24/2iytpDK3eY18MvL.png">
+<meta property="og:image" content="https://i.loli.net/2020/08/24/lHPAVoBUNQpMFYd.png">
+<meta property="article:published_time" content="2020-08-23T05:12:29.000Z">
+<meta property="article:modified_time" content="2020-08-24T12:24:36.000Z">
+<meta property="article:author" content="zhbli">
+<meta property="article:tag" content="Adversarial Attack">
+<meta property="article:tag" content="CVPR2016">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.loli.net/2020/08/24/GejKp2rxlbiNzEQ.png">
+
+<link rel="canonical" href="http://yoursite.com/2020/08/23/CVPR2016-DeepFool-a-simple-and-accurate-method-to-fool-deep-neural-networks/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>[CVPR2016] DeepFool: a simple and accurate method to fool deep neural networks | zhbli</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">zhbli</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-schedule">
+
+    <a href="/schedule/" rel="section"><i class="fa fa-fw fa-calendar"></i>Schedule</a>
+
+  </li>
+        <li class="menu-item menu-item-sitemap">
+
+    <a href="/sitemap.xml" rel="section"><i class="fa fa-fw fa-sitemap"></i>Sitemap</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="fa fa-fw fa-heartbeat"></i>Commonweal 404</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/08/23/CVPR2016-DeepFool-a-simple-and-accurate-method-to-fool-deep-neural-networks/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="zhbli">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="zhbli">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          [CVPR2016] DeepFool: a simple and accurate method to fool deep neural networks
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-08-23 13:12:29" itemprop="dateCreated datePublished" datetime="2020-08-23T13:12:29+08:00">2020-08-23</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-08-24 20:24:36" itemprop="dateModified" datetime="2020-08-24T20:24:36+08:00">2020-08-24</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="DeepFool-for-binary-classifiers"><a href="#DeepFool-for-binary-classifiers" class="headerlink" title="DeepFool for binary classifiers"></a>DeepFool for binary classifiers</h2><p>定义 $f:R^n\rightarrow R$ 是图像的两类分类器，$\hat k(x) = sign(f(x))$，$F={x:f(x)=0}$。首先分析 $f$ 是线性分类器的情况：</p>
+<img src="https://i.loli.net/2020/08/24/GejKp2rxlbiNzEQ.png" alt="image-20200824191203168" style="zoom:50%;" />
+
+<p>定义 $f$ 在点 $x_0$ 的鲁棒性为 $\Delta(x_0,f)^2$，即 $x_0$ 到决策边界的距离：</p>
+<img src="https://i.loli.net/2020/08/23/e9YAjzF74EZDmd2.png" alt="image-20200823133306059" style="zoom:50%;" />
+
+<p>扰动的闭式解为：</p>
+<img src="https://i.loli.net/2020/08/23/O8bQsTNimoaGJjU.png" alt="image-20200823133421748" style="zoom:50%;" />
+
+<p>现在假设 $f$ 是通用的两类的可微的分类器，我们采用迭代方法来估计鲁棒性 $\Delta(x_0,f)$。具体来说，每次迭代时，$f$ 在当前点 $x_i$ 附近被认为是线性的，且该线性分类器的最小扰动为：</p>
+<img src="https://i.loli.net/2020/08/23/EjRwk2WvMlHdguy.png" alt="image-20200823133852937" style="zoom:50%;" />
+
+<p>第 $i$ 次迭代的扰动 $r_i$ 由前述闭式解计算，用于更新 $x_{i+1}$。当 $x_{i+1}$ 的分类符号改变时，终止迭代。</p>
+<h2 id="DeepFool-for-multiclass-classifiers"><a href="#DeepFool-for-multiclass-classifiers" class="headerlink" title="DeepFool for multiclass classifiers"></a>DeepFool for multiclass classifiers</h2><p>分类器有c个输出，c是类别数。因此，分类器被定义为：$f:R^n\rightarrow R^c$，分类通过如下方式进行：</p>
+<img src="https://i.loli.net/2020/08/24/ZqD6whGgTPdrc8U.png" alt="image-20200824185922651" style="zoom:50%;" />
+
+<p>其中$f_k(x)$是f(x)对应于第k类的输出。</p>
+<p>与两类分类器类似，我们先分析线性分类器，再分析通用分类器。</p>
+<h3 id="Affine-multiclass-classifier"><a href="#Affine-multiclass-classifier" class="headerlink" title="Affine multiclass classifier"></a>Affine multiclass classifier</h3><p>定义分类器为：</p>
+<img src="https://i.loli.net/2020/08/24/gfKUwSHbzpJt2lC.png" alt="image-20200824191107547" style="zoom:50%;" />
+
+<p>最小扰动为：</p>
+<img src="https://i.loli.net/2020/08/24/opxzSnUshLjlWFg.png" alt="image-20200824190904363" style="zoom:50%;" />
+
+<p>其中$w_k$是矩阵W的第k列。</p>
+<p>从几何上讲，上述问题对应于计算$x_0$和 the complement of the convex polyhedron P 的距离：</p>
+<img src="https://i.loli.net/2020/08/24/1NXWPlr7Q8tMETB.png" alt="image-20200824191509670" style="zoom:50%;" />
+
+<p>其中$x_0$位于P的内部。我们定义这个距离为$dist(x_0,P^c)$.多面体P定义了f的输出为$\hat k(x_0)$ 的区域，如下图所示：</p>
+<img src="https://i.loli.net/2020/08/24/aEYbjOFl6zJRDXf.png" alt="image-20200824191848430" style="zoom:50%;" />
+
+<p>该问题的闭式解的计算如下所示。</p>
+<p>定义$\hat l(x_0)$是到P的边界最近的超平面（即上图的$F_3$）：</p>
+<img src="https://i.loli.net/2020/08/24/Zb4RWHsOmvGyjqA.png" alt="image-20200824192222232" style="zoom:50%;" />
+
+<p>最小扰动为：</p>
+<img src="https://i.loli.net/2020/08/24/2iytpDK3eY18MvL.png" alt="image-20200824192426135" style="zoom:50%;" />
+
+<p>换句话说，我们寻找$x_0$到P的表面的最近的投影。</p>
+<h3 id="General-classifier"><a href="#General-classifier" class="headerlink" title="General classifier"></a>General classifier</h3><p>对于通用的非线性分类器，P不再是多面体。我们将第i次迭代时的$P_i$近似为多面体$\tilde P_i$：</p>
+<img src="https://i.loli.net/2020/08/24/lHPAVoBUNQpMFYd.png" alt="image-20200824192825580" style="zoom:50%;" />
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Adversarial-Attack/" rel="tag"># Adversarial Attack</a>
+              <a href="/tags/CVPR2016/" rel="tag"># CVPR2016</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/08/23/arXiv1710-One-pixel-attack-for-fooling-deep-neural-networks/" rel="prev" title="[arXiv1710] One pixel attack for fooling deep neural networks ">
+      <i class="fa fa-chevron-left"></i> [arXiv1710] One pixel attack for fooling deep neural networks 
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/08/23/CVPR2019-SparseFool-a-few-pixels-make-a-big-difference/" rel="next" title="[CVPR2019] SparseFool: a few pixels make a big difference">
+      [CVPR2019] SparseFool: a few pixels make a big difference <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#DeepFool-for-binary-classifiers"><span class="nav-number">1.</span> <span class="nav-text">DeepFool for binary classifiers</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#DeepFool-for-multiclass-classifiers"><span class="nav-number">2.</span> <span class="nav-text">DeepFool for multiclass classifiers</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Affine-multiclass-classifier"><span class="nav-number">2.1.</span> <span class="nav-text">Affine multiclass classifier</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#General-classifier"><span class="nav-number">2.2.</span> <span class="nav-text">General classifier</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">zhbli</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">119</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">46</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zhbli</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+</body>
+</html>

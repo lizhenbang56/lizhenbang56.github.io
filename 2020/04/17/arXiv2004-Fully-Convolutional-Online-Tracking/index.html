@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="Abstract现有跟踪算法的问题：仅对分类分支进行简单地在线学习，难以对回归分支进行在线学习。 本文的解决方案：首次提出全卷积在线跟踪框架 FCOT，同时在线学习分类和回归分支。 主要贡献：  引入 anchor-free 边框回归分支，从而将整个跟踪网络统一为更简单的全卷积网络。 引入 regression model generator (RMG) 对回归分支在线优化，有效处理物体形变。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[arXiv2004] Fully Convolutional Online Tracking">
+<meta property="og:url" content="http://yoursite.com/2020/04/17/arXiv2004-Fully-Convolutional-Online-Tracking/index.html">
+<meta property="og:site_name" content="zhbli">
+<meta property="og:description" content="Abstract现有跟踪算法的问题：仅对分类分支进行简单地在线学习，难以对回归分支进行在线学习。 本文的解决方案：首次提出全卷积在线跟踪框架 FCOT，同时在线学习分类和回归分支。 主要贡献：  引入 anchor-free 边框回归分支，从而将整个跟踪网络统一为更简单的全卷积网络。 引入 regression model generator (RMG) 对回归分支在线优化，有效处理物体形变。">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://i.loli.net/2020/04/17/27Vgio8b3Md5ljm.png">
+<meta property="og:image" content="https://i.loli.net/2020/04/17/Y496rPnR7xygaFZ.png">
+<meta property="og:image" content="https://i.loli.net/2020/04/17/QtRcr6XDT48fmkb.png">
+<meta property="og:image" content="https://i.loli.net/2020/04/17/w4FVLB6faHDirWp.png">
+<meta property="og:image" content="https://i.loli.net/2020/04/17/BAoU2GnevOQ1i8x.png">
+<meta property="og:image" content="https://i.loli.net/2020/04/17/NJy7oIlstERGCnP.png">
+<meta property="og:image" content="https://i.loli.net/2020/04/17/jJVNt4EdYHWnQMw.png">
+<meta property="article:published_time" content="2020-04-17T09:49:04.000Z">
+<meta property="article:modified_time" content="2020-05-13T10:03:10.000Z">
+<meta property="article:author" content="zhbli">
+<meta property="article:tag" content="Tracking">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.loli.net/2020/04/17/27Vgio8b3Md5ljm.png">
+
+<link rel="canonical" href="http://yoursite.com/2020/04/17/arXiv2004-Fully-Convolutional-Online-Tracking/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>[arXiv2004] Fully Convolutional Online Tracking | zhbli</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">zhbli</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-schedule">
+
+    <a href="/schedule/" rel="section"><i class="fa fa-fw fa-calendar"></i>Schedule</a>
+
+  </li>
+        <li class="menu-item menu-item-sitemap">
+
+    <a href="/sitemap.xml" rel="section"><i class="fa fa-fw fa-sitemap"></i>Sitemap</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="fa fa-fw fa-heartbeat"></i>Commonweal 404</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/04/17/arXiv2004-Fully-Convolutional-Online-Tracking/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="zhbli">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="zhbli">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          [arXiv2004] Fully Convolutional Online Tracking
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-04-17 17:49:04" itemprop="dateCreated datePublished" datetime="2020-04-17T17:49:04+08:00">2020-04-17</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-05-13 18:03:10" itemprop="dateModified" datetime="2020-05-13T18:03:10+08:00">2020-05-13</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Tracking/" itemprop="url" rel="index"><span itemprop="name">Tracking</span></a>
+                </span>
+                  , 
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Tracking/Model-Update/" itemprop="url" rel="index"><span itemprop="name">Model Update</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="Abstract"><a href="#Abstract" class="headerlink" title="Abstract"></a>Abstract</h2><p>现有跟踪算法的问题：仅对分类分支进行简单地在线学习，难以对回归分支进行在线学习。</p>
+<p>本文的解决方案：首次提出全卷积在线跟踪框架 FCOT，同时在线学习分类和回归分支。</p>
+<p>主要贡献：</p>
+<ul>
+<li>引入 anchor-free 边框回归分支，从而将整个跟踪网络统一为更简单的全卷积网络。</li>
+<li>引入 regression model generator (RMG) 对回归分支在线优化，有效处理物体形变。</li>
+</ul>
+<p>性能：</p>
+<ul>
+<li>代码（待开源）：<a target="_blank" rel="noopener" href="https://github.com/MCG-NJU/FCOT">https://github.com/MCG-NJU/FCOT</a></li>
+<li>速度：53 FPS。</li>
+<li>GOT-10k AO=62.7。</li>
+</ul>
+<h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><p>目标跟踪包括分类分支和回归分支。对于分类任务，可分为生成式跟踪器（SiamFC）和判别式跟踪器（DiMP）：</p>
+<ul>
+<li>生成式：使用固定的 target template，不进行背景建模。</li>
+<li>判别式：通过最大化目标和背景之间的 response gap 来学习自适应滤波器。</li>
+</ul>
+<p>对于回归任务，现有方法通常取决于手工设计，例如锚框放置或边框框采样及选择。这种复杂设计使得回归分支难以在线更新。因此本文设计了简单的回归分支以进行在线更新。</p>
+<p>因此，本文提出全卷积跟踪器，无需任何手工设计。核心是 online anchor-free 边框回归分支，直接回归每帧的边框尺寸。另外，提出在线优化算法，自适应调整回归分支参数。</p>
+<p>FCOT 的具体设计：</p>
+<ol>
+<li>设计新的编码器-解码器结构，用于高分辨率特征提取。引入上采样层，对于提高准确性至关重要。</li>
+<li>FCOT 由用于大致定位对象中心的分类分支和用于回归边界框大小的回归分支组成，通过可变形卷积实现。</li>
+<li>为了区分背景和目标，并解决物体形变问题，通过在线学习对两个分支的参数进行自适应调整。受DiMP的启发，我们设计了一种新颖的在线回归模型生成器（RMG），该模型由模型初始化器和在线模型优化器组成。</li>
+</ol>
+<p>我们证明了在线边框回归器能够持续提高跟踪性能，尤其是对于更高的IoU标准。</p>
+<p>与 SiamFC++ 的区别：</p>
+<ul>
+<li>我们是在线跟踪器，专为分类和回归分支进行在线更新。而 SiamFC++ 是参数固定的生成式跟踪器。</li>
+<li>我们的特征图分辨率更高。</li>
+</ul>
+<h2 id="Our-Method"><a href="#Our-Method" class="headerlink" title="Our Method"></a>Our Method</h2><p><img src="https://i.loli.net/2020/04/17/27Vgio8b3Md5ljm.png" alt="image-20200417191653613"></p>
+<p>设计原则：</p>
+<ol>
+<li>简单而统一的架构。将特征提取器、分类分支和回归分支用单一架构实现。</li>
+<li>准确的回归和分类。<ol>
+<li>FCOT 生成更大的得分图和边框偏移图，使结果更精确。</li>
+<li>对于回归，首次使用最速下降方法在线优化 Regression Model Generator。</li>
+<li>对于分类，利用 DiMP 提出的 online target model generator 区分目标和背景。</li>
+</ol>
+</li>
+</ol>
+<h3 id="Classification-and-Regression-via-Fully-Convolutional-Network"><a href="#Classification-and-Regression-via-Fully-Convolutional-Network" class="headerlink" title="Classification and Regression via Fully Convolutional Network"></a>Classification and Regression via Fully Convolutional Network</h3><p>判别跟踪器如 ATOM、DIMP 性能很好，但是两阶段的，并执行复杂的目标回归过程。因此，我们为分类和回归引入了一个简单的全卷积网络来克服这些问题。</p>
+<h4 id="Feature-Extraction"><a href="#Feature-Extraction" class="headerlink" title="Feature Extraction"></a>Feature Extraction</h4><p>使用编解码器提取特征：</p>
+<ul>
+<li>编码器包括 ResNet50 的 1~4 层。</li>
+<li>解码器包括一个 $1 \times 1$ 卷积和两个简单的上采样层。</li>
+<li>下采样率为 4。</li>
+</ul>
+<p>Classification head 在训练和测试时一样，但 Regression Head 在训练和测试时不同。</p>
+<ul>
+<li>Regression Head-1 输出 1024 通道的特征图，用于生成 4 个回归滤波器。</li>
+<li>Regression Head-2 输出 256 通道的特征图，与 4 个滤波器进行回归卷积。</li>
+</ul>
+<img src="https://i.loli.net/2020/04/17/Y496rPnR7xygaFZ.png" alt="image-20200417192718516" style="zoom:50%;" />
+
+<h4 id="Classification-and-Regression"><a href="#Classification-and-Regression" class="headerlink" title="Classification and Regression"></a>Classification and Regression</h4><p>在 FCOT 中，将跟踪形式化为逐像素预测问题。我们使用分类和回归分支分别预测一个 target center confidence map $M_{cls}$ 和四个 offsets maps $M_{reg}$：</p>
+<img src="https://i.loli.net/2020/04/17/QtRcr6XDT48fmkb.png" alt="image-20200417193826360" style="zoom: 33%;" />
+
+<p>$\phi$ 表示分类分支的特征提取器，$\theta$ 表示回归分支的特征提取器，$f_{cls}$ 和 $f_{reg}$ 表示由相应的 model generators 产生的滤波器。$*$ 表示卷积操作。</p>
+<p>对于特征图的每个位置 $(x, y)$，可以将其映射回原图 $(\lfloor \frac{s}{2}+xs \rfloor, \lfloor\frac{s}{2}+ys \rfloor)$，其中 $s=4$ 为步长。</p>
+<p>对于分类，$M_{cls}$ 表示像素位于目标中心的置信得分。训练时的 ground truth 是以目标中点 $c_t$ 为中心的高斯函数图。</p>
+<p>对于回归，$M_{reg}(x,y)$ 是 4 维向量 $(l^\unicode{0x2A}, r^\unicode{0x2A}, t^\unicode{0x2A}, b^\unicode{0x2A})$，表示从点 $(x,y)$ 到映射到特征图中的目表边框的左、右、上、下边的距离。因此回归目标是：</p>
+<img src="https://i.loli.net/2020/04/17/w4FVLB6faHDirWp.png" alt="image-20200417193836328" style="zoom: 33%;" />
+
+<p>其中 $(x_0, y_0, x_1, y_1)$ 表示目标的边框。我们为针对目标中心 $c_t$ 半径为 2 的区域进行回归，而不仅为目标中心进行回归。</p>
+<h3 id="Regression-Model-Generator"><a href="#Regression-Model-Generator" class="headerlink" title="Regression Model Generator"></a>Regression Model Generator</h3><img src="https://i.loli.net/2020/04/17/BAoU2GnevOQ1i8x.png" alt="image-20200417202244892"  />
+
+<p>回归模型包括：</p>
+<ul>
+<li>模型初始化器<ul>
+<li>输入：<ul>
+<li>第一帧的回归特征</li>
+<li>第一帧的边框</li>
+</ul>
+</li>
+<li>输出：<ul>
+<li>回归卷积滤波器，即初始模型。</li>
+</ul>
+</li>
+<li>结构：<ul>
+<li>尺寸为 $3\times 3$ 的单个 ROI-pooling 层。</li>
+<li>为了提高速度，仅在第一帧的特征上执行 ROI pooling，产生粗略的模型。</li>
+</ul>
+</li>
+<li>模型优化器<ul>
+<li>输入：<ul>
+<li>训练集的特征</li>
+<li>相应的边框</li>
+</ul>
+</li>
+<li>作用：迭代更新模型。</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>模型优化器的在线回归训练损失：</p>
+<img src="https://i.loli.net/2020/04/17/NJy7oIlstERGCnP.png" alt="image-20200417193856004" style="zoom: 33%;" />
+
+<p>$N$ 是在线训练集 $S_{train}$ 的长度。</p>
+<p>$S_{train}$ 由具有较高分类得分的以跟踪的帧组成。</p>
+<p>$X$ 是由 Regression Head-1 提取的特征。</p>
+<p>$M_{reg}^{(c)}$ 是 regression map $M_{reg}$ 中，中心位置 $c$ 对应的四维距离向量。</p>
+<p>$X^{(c)}$ 是 $X$ 中的一部分，以 $c$ 为中心，面积为 $3\times 3$（与 regression model 的尺寸相同）。</p>
+<p>$f$ 是回归卷积滤波器。</p>
+<p>$*$ 是卷积操作。</p>
+<p>$\lambda$ 是正则化因子。</p>
+<p>使用梯度下降优化 $f$ 很慢，因此使用最速下降法求解。通过计算步长 $\alpha$ 来更新模型：</p>
+<img src="https://i.loli.net/2020/04/17/jJVNt4EdYHWnQMw.png" alt="image-20200417193907239" style="zoom: 33%;" />
+
+<p>步长和梯度的计算与 DiMP 相同。</p>
+<h3 id="Offiline-Training"><a href="#Offiline-Training" class="headerlink" title="Offiline Training"></a>Offiline Training</h3><p>离线训练分为两阶段：</p>
+<ol>
+<li>训练整个网络，除 regression optimizer 外。</li>
+<li>更新 regression optimizer，固定网络的其他部分。</li>
+</ol>
+<p>由于在线优化模型是耗时的，而且在 regression model generator 中仅有一个参数 $\lambda$ 需要训练，因此这种两阶段训练方式使得训练时间大为缩短。</p>
+<p>离线训练损失为：$L_{tot} = \alpha L_{cls} + \beta L_{reg}$，$\alpha = 100, \beta = 0.1$。</p>
+<p>使用 8 RTX 2080ti 离线训练 50 小时。 </p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Tracking/" rel="tag"># Tracking</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/04/16/CVPR2020-A-Transductive-Approach-for-Video-Object-Segmentation/" rel="prev" title="[CVPR2020] A Transductive Approach for Video Object Segmentation">
+      <i class="fa fa-chevron-left"></i> [CVPR2020] A Transductive Approach for Video Object Segmentation
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/04/18/ICCV2019-Learning-the-Model-Update-for-Siamese-Trackers/" rel="next" title="[ICCV2019] Learning the Model Update for Siamese Trackers">
+      [ICCV2019] Learning the Model Update for Siamese Trackers <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Abstract"><span class="nav-number">1.</span> <span class="nav-text">Abstract</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Introduction"><span class="nav-number">2.</span> <span class="nav-text">Introduction</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Our-Method"><span class="nav-number">3.</span> <span class="nav-text">Our Method</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Classification-and-Regression-via-Fully-Convolutional-Network"><span class="nav-number">3.1.</span> <span class="nav-text">Classification and Regression via Fully Convolutional Network</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Feature-Extraction"><span class="nav-number">3.1.1.</span> <span class="nav-text">Feature Extraction</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Classification-and-Regression"><span class="nav-number">3.1.2.</span> <span class="nav-text">Classification and Regression</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Regression-Model-Generator"><span class="nav-number">3.2.</span> <span class="nav-text">Regression Model Generator</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Offiline-Training"><span class="nav-number">3.3.</span> <span class="nav-text">Offiline Training</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">zhbli</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">119</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">46</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zhbli</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+</body>
+</html>

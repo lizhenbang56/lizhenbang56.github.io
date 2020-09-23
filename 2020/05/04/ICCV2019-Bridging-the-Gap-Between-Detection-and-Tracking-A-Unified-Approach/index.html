@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="Abstract本文设计了通用的框架，用于之间在目标检测器上构建跟踪器。为了实现这一点，必须弥合三个关键的差距：  目标检测器是特定于类别的，而跟踪器是类别无关的。 目标检测器不能区分同一类别的实例，而这是跟踪器的关键功能。 Temporal cues 对跟踪器很重要，而检测器处理的是静态图像，没有时间信息。  为了解决上述问题，本文：  首先提出一个简单的 target-guidance mod">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[ICCV2019] Bridging the Gap Between Detection and Tracking: A Unified Approach">
+<meta property="og:url" content="http://yoursite.com/2020/05/04/ICCV2019-Bridging-the-Gap-Between-Detection-and-Tracking-A-Unified-Approach/index.html">
+<meta property="og:site_name" content="zhbli">
+<meta property="og:description" content="Abstract本文设计了通用的框架，用于之间在目标检测器上构建跟踪器。为了实现这一点，必须弥合三个关键的差距：  目标检测器是特定于类别的，而跟踪器是类别无关的。 目标检测器不能区分同一类别的实例，而这是跟踪器的关键功能。 Temporal cues 对跟踪器很重要，而检测器处理的是静态图像，没有时间信息。  为了解决上述问题，本文：  首先提出一个简单的 target-guidance mod">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://i.loli.net/2020/05/04/RZXfPv8n79HA4FE.png">
+<meta property="og:image" content="https://i.loli.net/2020/05/04/fADi8bqCGrMc9T1.png">
+<meta property="og:image" content="https://i.loli.net/2020/05/04/WHEMJF5RL8VXUie.png">
+<meta property="og:image" content="https://i.loli.net/2020/05/04/DGorPV6XF4SjgcY.png">
+<meta property="og:image" content="https://i.loli.net/2020/05/04/7xiMSqXmZU3jOgJ.png">
+<meta property="og:image" content="https://i.loli.net/2020/05/04/OdEMQwSBZuWPHUm.png">
+<meta property="og:image" content="https://i.loli.net/2020/05/04/m9o1QeSjFMpW5wZ.png">
+<meta property="article:published_time" content="2020-05-04T05:07:40.000Z">
+<meta property="article:modified_time" content="2020-05-13T10:18:38.000Z">
+<meta property="article:author" content="zhbli">
+<meta property="article:tag" content="Tracking">
+<meta property="article:tag" content="ICCV2019">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.loli.net/2020/05/04/RZXfPv8n79HA4FE.png">
+
+<link rel="canonical" href="http://yoursite.com/2020/05/04/ICCV2019-Bridging-the-Gap-Between-Detection-and-Tracking-A-Unified-Approach/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>[ICCV2019] Bridging the Gap Between Detection and Tracking: A Unified Approach | zhbli</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">zhbli</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-schedule">
+
+    <a href="/schedule/" rel="section"><i class="fa fa-fw fa-calendar"></i>Schedule</a>
+
+  </li>
+        <li class="menu-item menu-item-sitemap">
+
+    <a href="/sitemap.xml" rel="section"><i class="fa fa-fw fa-sitemap"></i>Sitemap</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="fa fa-fw fa-heartbeat"></i>Commonweal 404</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/05/04/ICCV2019-Bridging-the-Gap-Between-Detection-and-Tracking-A-Unified-Approach/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="zhbli">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="zhbli">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          [ICCV2019] Bridging the Gap Between Detection and Tracking: A Unified Approach
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-05-04 13:07:40" itemprop="dateCreated datePublished" datetime="2020-05-04T13:07:40+08:00">2020-05-04</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-05-13 18:18:38" itemprop="dateModified" datetime="2020-05-13T18:18:38+08:00">2020-05-13</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Tracking/" itemprop="url" rel="index"><span itemprop="name">Tracking</span></a>
+                </span>
+                  , 
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Tracking/Meta-Learning/" itemprop="url" rel="index"><span itemprop="name">Meta-Learning</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="Abstract"><a href="#Abstract" class="headerlink" title="Abstract"></a>Abstract</h2><p>本文设计了通用的框架，用于之间在目标检测器上构建跟踪器。为了实现这一点，必须弥合三个关键的差距：</p>
+<ol>
+<li>目标检测器是特定于类别的，而跟踪器是类别无关的。</li>
+<li>目标检测器不能区分同一类别的实例，而这是跟踪器的关键功能。</li>
+<li>Temporal cues 对跟踪器很重要，而检测器处理的是静态图像，没有时间信息。</li>
+</ol>
+<p>为了解决上述问题，本文：</p>
+<ul>
+<li>首先提出一个简单的 target-guidance module，用于引导检测器定位 target-relevant objects。</li>
+<li>然后将元学习应用于目标检测器，以快速在线学习和调整  target-distractor classifier。</li>
+<li>进一步引入 anchored updating strategy  以缓解过拟合问题。</li>
+</ul>
+<p>性能：</p>
+<ul>
+<li>在 4 个数据库上进行实验：OTB2013，OTB2015，UAV123，Need for Speed。</li>
+</ul>
+<h2 id="Proposed-Method"><a href="#Proposed-Method" class="headerlink" title="Proposed Method"></a>Proposed Method</h2><h3 id="Target-Guided-Object-Detection"><a href="#Target-Guided-Object-Detection" class="headerlink" title="Target-Guided Object Detection"></a>Target-Guided Object Detection</h3><p>本文提出  target-guidance module，输入时 target/search region features，输出的特征图与检测网络相同。后续部分保持不变。</p>
+<p>具体而言，首先在目标特征上执行 ROI pooling，后跟卷积得到尺寸为 $C\times 1\times 1$，C 是特征通道数。具体按下图 (b) 的方式与 search features 进行融合。</p>
+<p><img src="https://i.loli.net/2020/05/04/RZXfPv8n79HA4FE.png" alt="image-20200504135037727"></p>
+<p>损失函数与检测网络相同。</p>
+<h3 id="Few-Shot-Learning-for-Domain-Adaptation"><a href="#Few-Shot-Learning-for-Domain-Adaptation" class="headerlink" title="Few-Shot Learning for Domain Adaptation"></a>Few-Shot Learning for Domain Adaptation</h3><p>虽然上一节提到的模块可以检测到与目标相关的物体上，但是难以区分这些物体。</p>
+<p>我们假设主要的原因是未考虑周围的负样本，从而削弱了检测器的判别性。为了弥补这一点，本文提出在少量样本上显式学习分类器。但是，直接在如此小的数据集上从头训练非常耗时，并会导致严重的过拟合。因此，本文用 few-shot learning 方法解决这一问题。</p>
+<p>具体而言，采用 MAML 算法来训练 target-distractor classifier。MAML 学习了网络初始化，可以通过少量训练样本和几次迭代快速适应新的、看不见的任务。</p>
+<p>在本文的模型中，作者发现检测器的 classification head 是 target-distractor classifier 的良好初始化，因此使用 meta layer 代替它，并从大量训练数据中学习针对任务进行微调。</p>
+<p>具体而言，在训练过程中，从视频帧中采样 triplets ${z_b,s_b,q_b}_{b=1}^B$，其中 $B$ 是 batch size，$z_b,s_b,q_b$ 是三个 croped images，按时间顺序采样，即 exemplar, support and query images。对于 meta-parameter 为 $\theta$ 的 guided detector，希望学习初始的 $\theta=\theta_0$，使得在 <code>support set</code> $(z_b,s_b)$ 上进行梯度更新获得 $\theta_N$ 后，检测器能够在 query set $(z_b,q_b)$ 上表现良好。在 $(z_b,s_b)$ 上的第 $i$ 次梯度更新为（公式 1）：</p>
+<img src="https://i.loli.net/2020/05/04/fADi8bqCGrMc9T1.png" alt="image-20200504142857175" style="zoom:50%;" />
+
+<p>其中 $\mathcal {L}_{(z_b,s_b)}$ 是分类损失。meta-loss 为（公式 2）：</p>
+<img src="https://i.loli.net/2020/05/04/WHEMJF5RL8VXUie.png" alt="image-20200504143621041" style="zoom:50%;" />
+
+<p>其中我们显式地写出了 $\theta_N^b$ 依赖于 $\theta_0$。</p>
+<p>对 meta-parameter $\theta_0$ 的更新为（公式 3）：</p>
+<img src="https://i.loli.net/2020/05/04/DGorPV6XF4SjgcY.png" alt="image-20200504143951753" style="zoom:50%;" />
+
+<p>公式 1 称作内循环，公式 3 称作外循环。由于微调过程是在不同样本上进行的（support/query set)，因此泛化能力得到了保证。</p>
+<p>实验发现，同时微调 classification/regression head 效果更好。因此本文直接利用检测器的 loss 优化 $\theta_0$。</p>
+<p>整个跟踪框架端到端训练。</p>
+<h3 id="Online-Tracking-Approach"><a href="#Online-Tracking-Approach" class="headerlink" title="Online Tracking Approach"></a>Online Tracking Approach</h3><h4 id="Anchored-Updating"><a href="#Anchored-Updating" class="headerlink" title="Anchored Updating"></a>Anchored Updating</h4><p>元学习的离线训练无法保证 contrinuous learning 的泛化能力。</p>
+<p>受 anchor loss 的启发，提出  anchored updating strategy 以缓解过拟合现象。</p>
+<p>具体而言，将第 1 帧学习的参数 $\theta_1$ 保存起来，第 $t$ 帧的参数 $\theta_t$ 定义为上一阵的参数与初始参数的线性组合：</p>
+<img src="https://i.loli.net/2020/05/04/7xiMSqXmZU3jOgJ.png" alt="image-20200504151309450" style="zoom:50%;" />
+
+<p>将 $\theta_0$ 称为 anchor parameters。由于 anchor parameters 在在线优化过程中具有固定的权重，因此可以缓解过拟合的问题。</p>
+<h3 id="Instatiation-on-SSD-and-FasterRCNN"><a href="#Instatiation-on-SSD-and-FasterRCNN" class="headerlink" title="Instatiation on SSD and FasterRCNN"></a>Instatiation on SSD and FasterRCNN</h3><p>我们的模块具有通用性，可以适用于不同的目标检测器。但在本文中，对两个典型的检测框架进行实例化：SSD 和 Faster RCNN。</p>
+<h2 id="Experiments"><a href="#Experiments" class="headerlink" title="Experiments"></a>Experiments</h2><h3 id="Ablation-Study"><a href="#Ablation-Study" class="headerlink" title="Ablation Study"></a>Ablation Study</h3><h4 id="Few-shot-Learning"><a href="#Few-shot-Learning" class="headerlink" title="Few-shot Learning"></a>Few-shot Learning</h4><p>将本文的 few-shot learning 算法与  brute force gradient descent (GD) 分别对网络进行微调。</p>
+<p>见下表。</p>
+<h4 id="Anchored-Updating-1"><a href="#Anchored-Updating-1" class="headerlink" title="Anchored Updating"></a>Anchored Updating</h4><p>见下表。</p>
+<h4 id="Guidance-Images"><a href="#Guidance-Images" class="headerlink" title="Guidance Images"></a>Guidance Images</h4><p>见下表。</p>
+<img src="https://i.loli.net/2020/05/04/OdEMQwSBZuWPHUm.png" alt="image-20200504152114044" style="zoom:50%;" />
+
+<h4 id="Backbone-Network-Depth"><a href="#Backbone-Network-Depth" class="headerlink" title="Backbone Network Depth"></a>Backbone Network Depth</h4><img src="https://i.loli.net/2020/05/04/m9o1QeSjFMpW5wZ.png" alt="image-20200504152202334" style="zoom:50%;" />
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Tracking/" rel="tag"># Tracking</a>
+              <a href="/tags/ICCV2019/" rel="tag"># ICCV2019</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/05/04/CVPR2020-Revisiting-the-Sibling-Head-in-Object-Detector/" rel="prev" title="[CVPR2020] Revisiting the Sibling Head in Object Detector">
+      <i class="fa fa-chevron-left"></i> [CVPR2020] Revisiting the Sibling Head in Object Detector
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/05/04/ICCV2019-GradNet-Gradient-Guided-Network-for-Visual-Object-Tracking/" rel="next" title="[ICCV2019] GradNet: Gradient-Guided Network for Visual Object Tracking">
+      [ICCV2019] GradNet: Gradient-Guided Network for Visual Object Tracking <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Abstract"><span class="nav-number">1.</span> <span class="nav-text">Abstract</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Proposed-Method"><span class="nav-number">2.</span> <span class="nav-text">Proposed Method</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Target-Guided-Object-Detection"><span class="nav-number">2.1.</span> <span class="nav-text">Target-Guided Object Detection</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Few-Shot-Learning-for-Domain-Adaptation"><span class="nav-number">2.2.</span> <span class="nav-text">Few-Shot Learning for Domain Adaptation</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Online-Tracking-Approach"><span class="nav-number">2.3.</span> <span class="nav-text">Online Tracking Approach</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Anchored-Updating"><span class="nav-number">2.3.1.</span> <span class="nav-text">Anchored Updating</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Instatiation-on-SSD-and-FasterRCNN"><span class="nav-number">2.4.</span> <span class="nav-text">Instatiation on SSD and FasterRCNN</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Experiments"><span class="nav-number">3.</span> <span class="nav-text">Experiments</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Ablation-Study"><span class="nav-number">3.1.</span> <span class="nav-text">Ablation Study</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Few-shot-Learning"><span class="nav-number">3.1.1.</span> <span class="nav-text">Few-shot Learning</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Anchored-Updating-1"><span class="nav-number">3.1.2.</span> <span class="nav-text">Anchored Updating</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Guidance-Images"><span class="nav-number">3.1.3.</span> <span class="nav-text">Guidance Images</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Backbone-Network-Depth"><span class="nav-number">3.1.4.</span> <span class="nav-text">Backbone Network Depth</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">zhbli</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">119</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">46</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zhbli</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+</body>
+</html>

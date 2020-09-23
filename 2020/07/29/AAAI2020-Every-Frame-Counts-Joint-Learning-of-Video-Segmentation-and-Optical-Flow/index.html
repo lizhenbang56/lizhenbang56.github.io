@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="Abstract现有算法的问题：视频分割和光流估计仍然被视为两个单独的任务。 本文的解决方案：提出同时进行视频语义分割和光流估计的框架。 Introduction光流编码了视频的帧间一致。主要有两方面的作用：  提高视频分割精度。例如，[20, 34, 27] 复用先前帧的特征以加快分割速度，但会降低分割精度。 [27] 直接利用先前帧的特征以节省计算量。 [34] 利用了从 flownet 中计">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[AAAI2020] Every Frame Counts: Joint Learning of Video Segmentation and Optical Flow">
+<meta property="og:url" content="http://yoursite.com/2020/07/29/AAAI2020-Every-Frame-Counts-Joint-Learning-of-Video-Segmentation-and-Optical-Flow/index.html">
+<meta property="og:site_name" content="zhbli">
+<meta property="og:description" content="Abstract现有算法的问题：视频分割和光流估计仍然被视为两个单独的任务。 本文的解决方案：提出同时进行视频语义分割和光流估计的框架。 Introduction光流编码了视频的帧间一致。主要有两方面的作用：  提高视频分割精度。例如，[20, 34, 27] 复用先前帧的特征以加快分割速度，但会降低分割精度。 [27] 直接利用先前帧的特征以节省计算量。 [34] 利用了从 flownet 中计">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://i.loli.net/2020/07/29/HZSjcwBYXCbzJym.png">
+<meta property="og:image" content="https://i.loli.net/2020/07/29/P2W16amikZYzhqj.png">
+<meta property="og:image" content="https://i.loli.net/2020/07/29/9GJTqZgnW2y3jRC.png">
+<meta property="og:image" content="https://i.loli.net/2020/07/29/eGHj8nS4B6LivEK.png">
+<meta property="og:image" content="https://i.loli.net/2020/07/29/u6onPfBFTEAQLc5.png">
+<meta property="og:image" content="https://i.loli.net/2020/07/29/S4oizhab5kwespx.png">
+<meta property="og:image" content="https://i.loli.net/2020/07/29/BPeObF6q8Qgx4Ei.png">
+<meta property="og:image" content="https://i.loli.net/2020/07/29/fQXldyBHjeVLZg7.png">
+<meta property="article:published_time" content="2020-07-29T07:03:06.000Z">
+<meta property="article:modified_time" content="2020-07-29T09:28:32.000Z">
+<meta property="article:author" content="zhbli">
+<meta property="article:tag" content="AAAI2020">
+<meta property="article:tag" content="Video Semantic Segmentation">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.loli.net/2020/07/29/HZSjcwBYXCbzJym.png">
+
+<link rel="canonical" href="http://yoursite.com/2020/07/29/AAAI2020-Every-Frame-Counts-Joint-Learning-of-Video-Segmentation-and-Optical-Flow/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>[AAAI2020] Every Frame Counts: Joint Learning of Video Segmentation and Optical Flow | zhbli</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">zhbli</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-schedule">
+
+    <a href="/schedule/" rel="section"><i class="fa fa-fw fa-calendar"></i>Schedule</a>
+
+  </li>
+        <li class="menu-item menu-item-sitemap">
+
+    <a href="/sitemap.xml" rel="section"><i class="fa fa-fw fa-sitemap"></i>Sitemap</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="fa fa-fw fa-heartbeat"></i>Commonweal 404</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/07/29/AAAI2020-Every-Frame-Counts-Joint-Learning-of-Video-Segmentation-and-Optical-Flow/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="zhbli">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="zhbli">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          [AAAI2020] Every Frame Counts: Joint Learning of Video Segmentation and Optical Flow
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2020-07-29 15:03:06 / Modified: 17:28:32" itemprop="dateCreated datePublished" datetime="2020-07-29T15:03:06+08:00">2020-07-29</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="Abstract"><a href="#Abstract" class="headerlink" title="Abstract"></a>Abstract</h2><p>现有算法的问题：视频分割和光流估计仍然被视为两个单独的任务。</p>
+<p>本文的解决方案：提出同时进行视频语义分割和光流估计的框架。</p>
+<h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><p>光流编码了视频的帧间一致。主要有两方面的作用：</p>
+<ol>
+<li>提高视频分割精度。例如，[20, 34, 27] 复用先前帧的特征以加快分割速度，但会降低分割精度。<ol>
+<li>[27] 直接利用先前帧的特征以节省计算量。</li>
+<li>[34] 利用了从 flownet 中计算的光流，将关键帧的特征传播到当前帧。</li>
+<li>[20] 自适应地传播特征。</li>
+</ol>
+</li>
+<li>加快视频分割速度。例如，[7, 16, 8, 23, 11] 利用 flow 进行特征聚合，以获得更好的分割结果，但会降低分割速度。<ol>
+<li>[7] 提出通过时空LSTM模块组合连续帧的CNN特征。</li>
+<li>[8] 将先前帧和当前帧以及当前帧中的特征组合起来以预测分割。</li>
+<li>[23] 提出了门控循环单元来传播语义标签。</li>
+<li>[16] 以无监督的方式从未标记的视频数据中学习。</li>
+</ol>
+</li>
+</ol>
+<blockquote>
+<p>[20] Li, Y.; Shi, J.; and Lin, D. 2018. <strong>Low-latency video semantic segmentation</strong>. In CVPR, 5997–6005.</p>
+<p>[34] Zhu, X.; Xiong, Y.; Dai, J.; Yuan, L.; and Wei, Y. 2017. <strong>Deep feature flow for video recognition</strong>. In CVPR, 3.</p>
+<p>[27] Shelhamer, E.; Rakelly, K.; Hoffman, J.; and Darrell, T. 2016. <strong>Clockwork convnets for video semantic segmentatio</strong>n. In ECCV, 852–868. Springer.</p>
+</blockquote>
+<blockquote>
+<p>[7] Fayyaz, M.; Saffar, M. H.; Sabokrou, M.; Fathy, M.; Klette, R.; and Huang, F. 2016. <strong>Stfcn: spatio-temporal fcn for semantic video segmentation</strong>. arXiv preprint arXiv:1608.05971.</p>
+<p>[16] Jin, X.; Li, X.; Xiao, H.; Shen, X.; Lin, Z.; Yang, J.; Chen, Y.; Dong, J.; Liu, L.; Jie, Z.; et al. 2017. <strong>Video scene parsing with predictive feature learning</strong>. In ICCV, 5581–5589.</p>
+<p>[8] Gadde, R.; Jampani, V.; and Gehler, P. V. 2017. <strong>Semantic video cnns through representation warping</strong>. CoRR, abs/1708.03088 8:9.</p>
+<p>[23] Nilsson, D., and Sminchisescu, C. 2018. <strong>Semantic video segmentation by gated recurrent flow propagation</strong>. In CVPR, 6819–6828.</p>
+<p>[11] Hur, J., and Roth, S. 2016. <strong>Joint optical flow and temporally consistent semantic segmentation</strong>. In ECCV, 163–177. Springer.</p>
+</blockquote>
+<p>本文提出同时进行视频语义分割和光流估计的框架。语义分割引入了语义信息，可帮助识别遮挡以实现更可靠的光流估计。同时，非遮挡的光流提供准确的像素级对应关系，以确保分割的时间一致性。</p>
+<h2 id="Related-Work"><a href="#Related-Work" class="headerlink" title="Related Work"></a>Related Work</h2><p>其他视频分割方法：</p>
+<ul>
+<li>[17] 在视频分割中使用了 dense random field。</li>
+<li>[2] 在高斯条件随机场（CRF）上引入了紧密连接的时空图。</li>
+<li>[11] 基于超像素，估计在光流和时间上一致的语义分割结果。</li>
+<li>[4] 提出了在多任务框架中学习视频目标分割和光流的方法，该框架着重于分割实例级的目标，以有监督的方式学习光流和目标分割。相比之下，我们的任务是对整个图像进行语义分割，而我们的光流是在无监督的情况下学习的。这两个任务不能直接比较。</li>
+</ul>
+<blockquote>
+<p>[17] Kundu, A.; Vineet, V.; and Koltun, V. 2016. <strong>Feature space optimization for semantic video segmentation</strong>. In CVPR, 3168–3175.</p>
+<p>[2] S. Chandra, C. Couprie, and I. Kokkinos (2018) <strong>Deep spatio-temporal random fields for efficient video segmentation</strong>. In CVPR, pp. 8915–8924.</p>
+<p>[11] J. Hur and S. Roth (2016) <strong>Joint optical flow and temporally consistent semantic segmentation.</strong> In ECCV, pp. 163–177.</p>
+<p>[4] J. Cheng, Y. Tsai, S. Wang, and M. Yang (2017) <strong>Segflow: joint learning for video object segmentation and optical flow.</strong> In ICCV, pp. 686–695.</p>
+</blockquote>
+<h2 id="Methodology"><a href="#Methodology" class="headerlink" title="Methodology"></a>Methodology</h2><img src="https://i.loli.net/2020/07/29/HZSjcwBYXCbzJym.png" alt="image-20200729161445548" style="zoom:50%;" />
+
+<h3 id="Framework-Overview"><a href="#Framework-Overview" class="headerlink" title="Framework Overview"></a>Framework Overview</h3><p>模型的输入是来自同一视频的图像对 $I_i, I_{i+t}, t\in [1,5]$。</p>
+<p>网络包含三部分：</p>
+<ul>
+<li>the shared encoder part：包含resnet的1-3层。</li>
+<li>the segmentation decoder part</li>
+<li>the flow decoder part</li>
+</ul>
+<p>网络还包括如下两个模块：</p>
+<ul>
+<li>temporal consistency module</li>
+<li>occlusion handling module</li>
+</ul>
+<h3 id="Temporally-Consistent-Constraint"><a href="#Temporally-Consistent-Constraint" class="headerlink" title="Temporally Consistent Constraint"></a>Temporally Consistent Constraint</h3><p>对于两帧 $I_i,I_{i+t}$，送入编码网络得到特征图 $S_i,S_{i+t}$。因为我们同时学习前向和后向光流 $F_{i\rightarrow i+t}, F_{i+t\rightarrow i}$，我们得到 warp 的特征 $S’<em>{i},S’</em>{i+t}$：</p>
+<img src="https://i.loli.net/2020/07/29/P2W16amikZYzhqj.png" alt="image-20200729162918256" style="zoom:50%;" />
+
+<p>使用可微分的双线性插值进行warp操作。</p>
+<p>注意，光流在遮挡区域不可用。因此我们通过检查一个像素在相邻帧是否有对应像素，估计 occlusion maps $O_{est}^i, O_{est}^{i+t}$。Temporal<br>consistency loss 定义为：</p>
+<img src="https://i.loli.net/2020/07/29/9GJTqZgnW2y3jRC.png" alt="image-20200729163507163" style="zoom:50%;" />
+
+<p>训练时计算了两个方向的损失。</p>
+<h3 id="Occlusion-Estimation"><a href="#Occlusion-Estimation" class="headerlink" title="Occlusion Estimation"></a>Occlusion Estimation</h3><p>网络通过自监督方式学习遮挡。遮挡估计网络和光流估计网络共享大部分参数。在光流分支的每个 block，添加两层卷积和一个sigmoid层用于遮挡估计。利用后向光流 $F_{i+t\rightarrow i}$，可以在像素级别计算两帧的对应关系。我们把光流解耦为垂直项和水平项$F_{i+t\rightarrow i}(y,x,1),F_{i+t\rightarrow i}(y,x,0)$，则有：</p>
+<img src="https://i.loli.net/2020/07/29/eGHj8nS4B6LivEK.png" alt="image-20200729165326943" style="zoom:50%;" />
+
+<p>（说明：上述公式的作用是计算$i$帧中的坐标点$(x_i,y_i)$经过光流后在第$i+t$帧的对应坐标点$(x_{i+t},y_{i+t})$。）</p>
+<p>后向光流$F_{i+t\rightarrow i}$的 occlusion mask $\hat O_i$ 定义为：若在 $I_{i+t}$ 中存在对应像素$(y_{i+t},x_{i+t})$，则$\hat O_i (y_i,x_i)=0$，否则为1。</p>
+<p>带惩罚项的交叉熵用于计算遮挡估计的损失：</p>
+<img src="https://i.loli.net/2020/07/29/u6onPfBFTEAQLc5.png" alt="image-20200729165948735" style="zoom:50%;" />
+
+<h3 id="Optical-Flow-Estimation"><a href="#Optical-Flow-Estimation" class="headerlink" title="Optical Flow Estimation"></a>Optical Flow Estimation</h3><p>语义图$M$引入了有关运动的语义信息。此外会计算error masks以指出错误的光流区域，从而进行可靠的光流估计。</p>
+<p>首先计算两个分支的inconsistent mask $O_{seg} = (M \ne M’)$，其中$M’$是使用双线性插值得到的warp后的分割结果。Error mask 计算为：</p>
+<img src="https://i.loli.net/2020/07/29/S4oizhab5kwespx.png" alt="image-20200729171613094" style="zoom:50%;" />
+
+<p>Photometric loss 的计算：</p>
+<img src="https://i.loli.net/2020/07/29/BPeObF6q8Qgx4Ei.png" alt="image-20200729172546868" style="zoom:50%;" />
+
+<p>其中 $I’$ 是 warp 后的图像。</p>
+<p>Smoothness loss 为：</p>
+<img src="https://i.loli.net/2020/07/29/fQXldyBHjeVLZg7.png" alt="image-20200729172813782" style="zoom:50%;" />
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/AAAI2020/" rel="tag"># AAAI2020</a>
+              <a href="/tags/Video-Semantic-Segmentation/" rel="tag"># Video Semantic Segmentation</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/07/20/ECCV2020-Efficient-Semantic-Video-Segmentation-with-Per-frame-Inference/" rel="prev" title="[ECCV2020] Efficient Semantic Video Segmentation with Per-frame Inference">
+      <i class="fa fa-chevron-left"></i> [ECCV2020] Efficient Semantic Video Segmentation with Per-frame Inference
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/07/30/CVPR2020-Temporally-Distributed-Networks-for-Fast-Video-Segmentation/" rel="next" title="[CVPR2020] Temporally Distributed Networks for Fast Video Segmentation">
+      [CVPR2020] Temporally Distributed Networks for Fast Video Segmentation <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Abstract"><span class="nav-number">1.</span> <span class="nav-text">Abstract</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Introduction"><span class="nav-number">2.</span> <span class="nav-text">Introduction</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Related-Work"><span class="nav-number">3.</span> <span class="nav-text">Related Work</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Methodology"><span class="nav-number">4.</span> <span class="nav-text">Methodology</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Framework-Overview"><span class="nav-number">4.1.</span> <span class="nav-text">Framework Overview</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Temporally-Consistent-Constraint"><span class="nav-number">4.2.</span> <span class="nav-text">Temporally Consistent Constraint</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Occlusion-Estimation"><span class="nav-number">4.3.</span> <span class="nav-text">Occlusion Estimation</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Optical-Flow-Estimation"><span class="nav-number">4.4.</span> <span class="nav-text">Optical Flow Estimation</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">zhbli</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">119</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">46</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zhbli</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+</body>
+</html>

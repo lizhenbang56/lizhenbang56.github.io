@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="Abstract现有跟踪算法的问题：孪生跟踪器的模板是固定的，无法捕获目标随时间的变化或 background clutter。 本文的解决方案：提出 gradient-guided network，利用梯度的判别信息，通过前向传播和反向传播操作，更新孪生网络中的模板。 此外，提出 template generalization training method，以更好地利用梯度信息，避免过拟合。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[ICCV2019] GradNet: Gradient-Guided Network for Visual Object Tracking">
+<meta property="og:url" content="http://yoursite.com/2020/05/04/ICCV2019-GradNet-Gradient-Guided-Network-for-Visual-Object-Tracking/index.html">
+<meta property="og:site_name" content="zhbli">
+<meta property="og:description" content="Abstract现有跟踪算法的问题：孪生跟踪器的模板是固定的，无法捕获目标随时间的变化或 background clutter。 本文的解决方案：提出 gradient-guided network，利用梯度的判别信息，通过前向传播和反向传播操作，更新孪生网络中的模板。 此外，提出 template generalization training method，以更好地利用梯度信息，避免过拟合。">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://i.loli.net/2020/05/04/H7RJunsNT4E9M6Z.png">
+<meta property="og:image" content="https://i.loli.net/2020/05/04/pL5PkgSOd8xQ97T.png">
+<meta property="og:image" content="https://i.loli.net/2020/05/04/R2jFfAcG6oubvVX.png">
+<meta property="og:image" content="https://i.loli.net/2020/05/04/x43PqSEBKlow9f7.png">
+<meta property="og:image" content="https://i.loli.net/2020/05/04/ns9OJp8duG2Z7RU.png">
+<meta property="og:image" content="https://i.loli.net/2020/05/04/yrVUgdnHwYNxq31.png">
+<meta property="og:image" content="https://i.loli.net/2020/05/04/ojSsNGyTH8pd9RV.png">
+<meta property="og:image" content="https://i.loli.net/2020/05/04/W3hecmKENVT1Dni.png">
+<meta property="article:published_time" content="2020-05-04T07:52:10.000Z">
+<meta property="article:modified_time" content="2020-05-13T12:38:38.000Z">
+<meta property="article:author" content="zhbli">
+<meta property="article:tag" content="Tracking">
+<meta property="article:tag" content="ICCV2019">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.loli.net/2020/05/04/H7RJunsNT4E9M6Z.png">
+
+<link rel="canonical" href="http://yoursite.com/2020/05/04/ICCV2019-GradNet-Gradient-Guided-Network-for-Visual-Object-Tracking/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>[ICCV2019] GradNet: Gradient-Guided Network for Visual Object Tracking | zhbli</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">zhbli</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-schedule">
+
+    <a href="/schedule/" rel="section"><i class="fa fa-fw fa-calendar"></i>Schedule</a>
+
+  </li>
+        <li class="menu-item menu-item-sitemap">
+
+    <a href="/sitemap.xml" rel="section"><i class="fa fa-fw fa-sitemap"></i>Sitemap</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="fa fa-fw fa-heartbeat"></i>Commonweal 404</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/05/04/ICCV2019-GradNet-Gradient-Guided-Network-for-Visual-Object-Tracking/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="zhbli">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="zhbli">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          [ICCV2019] GradNet: Gradient-Guided Network for Visual Object Tracking
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-05-04 15:52:10" itemprop="dateCreated datePublished" datetime="2020-05-04T15:52:10+08:00">2020-05-04</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-05-13 20:38:38" itemprop="dateModified" datetime="2020-05-13T20:38:38+08:00">2020-05-13</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Tracking/" itemprop="url" rel="index"><span itemprop="name">Tracking</span></a>
+                </span>
+                  , 
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Tracking/Template-Update/" itemprop="url" rel="index"><span itemprop="name">Template Update</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="Abstract"><a href="#Abstract" class="headerlink" title="Abstract"></a>Abstract</h2><p>现有跟踪算法的问题：孪生跟踪器的模板是固定的，无法捕获目标随时间的变化或 background clutter。</p>
+<p>本文的解决方案：提出 gradient-guided network，利用梯度的判别信息，通过前向传播和反向传播操作，更新孪生网络中的模板。</p>
+<p>此外，提出 template generalization training method，以更好地利用梯度信息，避免过拟合。</p>
+<p>性能：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://github.com/LPXTT/GradNet-Tensorflow">https://github.com/LPXTT/GradNet-Tensorflow</a></li>
+<li>在四个数据库上进行实验：OTB-2015、TC-128、VOT-2017、LaSOT。</li>
+<li>速度：80 FPS。</li>
+</ul>
+<h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><p>对于孪生跟踪器，有些方法 [16] [45] [40] 提出了更新 template features 的不同机制。</p>
+<blockquote>
+<p>[16] Qing Guo, Wei Feng, Ce Zhou, Rui Huang, Liang Wan, and Song Wang. <strong>Learning dynamic siamese network for visual object tracking</strong>. In ICCV, 2017.</p>
+<p>[45] Zheng Zhu, Wei Wu, Wei Zou, and Junjie Yan. <strong>End-to-end flow correlation tracking with spatial-temporal attention</strong>. In ECCV, 2018.</p>
+<p>[40] Tianyu Yang and Antoni B. Chan. <strong>Learning dynamic memory networks for object tracking</strong>. In ECCV, 2018.</p>
+</blockquote>
+<p>然而，这些方法仅专注于组合先前的目标特征，而忽略了 background clutter 中的判别信息。这导致孪生跟踪器与其他在线更新的跟踪器之间存在很大的准确性差距。</p>
+<p>通常来说，梯度是通过通过考虑正负候选的最终损失来计算的。因此，梯度包含判别信息以反映目标变化并与 background clutter 区分开。当物体被遮挡或在目标附近存在近似物体时，这些位置处的梯度幅值常常较高。梯度中较高的值可能会迫使模板专注于这些区域并捕获关键的判别性信息。</p>
+<p>为了减少迭代次数，极端情况是仅迭代一次，但没有合适的学习率使得仅通过一次迭代就能收敛。即使具有最佳补偿，一次迭代也无法收敛，因为基于常规梯度的优化也无法正确更新模板，因为基于常规梯度的优化是一个非线性过程。</p>
+<p>另一方面，我们可以通过 CNN 学习非线性函数，该函数通过探索梯度中的丰富信息来模拟基于梯度的非线性优化。因此我们提出了 gradient-guided network (GradNet) 在目标跟踪中执行  gradient-guided adaptation。GradNet 整合了由两个前向传播和一个后向传播组成的自适应过程，从而简化了基于梯度的优化过程。</p>
+<p>训练鲁棒的 GradNet 的任务非常艰巨，原因有两个：</p>
+<ol>
+<li>网络倾向于使用模板的表观而不是梯度进行跟踪。因为学习使用梯度比学习使用表观更困难。</li>
+<li>网络易于过拟合。</li>
+</ol>
+<p>为了解决这些问题，本文提出  template generalization 方法，可以有效探索梯度信息并避免过拟合。</p>
+<h2 id="Related-Work"><a href="#Related-Work" class="headerlink" title="Related Work"></a>Related Work</h2><h3 id="Model-Updating-in-Tracking"><a href="#Model-Updating-in-Tracking" class="headerlink" title="Model Updating in Tracking"></a>Model Updating in Tracking</h3><p>模型更新有三种策略：template combination、gradient-descen based、correlation-based。</p>
+<h4 id="Template-Combination"><a href="#Template-Combination" class="headerlink" title="Template Combination"></a>Template Combination</h4><p>[16] 提出了 fast transformation learning model，利用先前帧进行有效的在线学习。</p>
+<p>[45] 利用光流信息转换模板应根据权重进行整合。</p>
+<p>然而，这些方法仅专注于组合先前的目标特征，而忽略了 background clutter 中的判别信息。</p>
+<h4 id="Gradient-descent-based-approaches"><a href="#Gradient-descent-based-approaches" class="headerlink" title="Gradient-descent based approaches"></a>Gradient-descent based approaches</h4><p>[36] 训练两个独立的卷积层，使用初始帧回归高斯图，并每隔几帧更新一次这些层。</p>
+<blockquote>
+<p>[36] Lijun Wang, Wanli Ouyang, Xiaogang Wang, and Huchuan Lu. <strong>Visual tracking with fully convolutional networks</strong>. In ICCV, 2015.</p>
+</blockquote>
+<p>[32] 在初始化和在线更新过程中也使用了多次梯度下降进行迭代。</p>
+<blockquote>
+<p>[32] Yibing Song, Chao Ma, Lijun Gong, Jiawei Zhang, Rynson W. H. Lau, and Ming-Hsuan Yang. <strong>CREST: convolutional residual learning for visual tracking</strong>. In ICCV, 2017.</p>
+</blockquote>
+<p>这些跟踪器需要进行多次训练迭代才能捕获目标表观的变化。</p>
+<h4 id="Correlation-based-Tracking"><a href="#Correlation-based-Tracking" class="headerlink" title="Correlation based Tracking"></a>Correlation based Tracking</h4><p>分类器的训练不能完全由深度网络模拟，因此大多数基于相关性的跟踪器仅利用深度网络来提取鲁棒的特征。</p>
+<h2 id="Proposed-Algorithm"><a href="#Proposed-Algorithm" class="headerlink" title="Proposed Algorithm"></a>Proposed Algorithm</h2><p><img src="https://i.loli.net/2020/05/04/H7RJunsNT4E9M6Z.png" alt="image-20200504170340199"></p>
+<p>GradNet 由两个分支组成，一个分支提取搜索区域的特征，另一个分支分距目标信息和梯度生成模板。</p>
+<p>模板生成过程包括 initial embedding、gradient calculation、template updating：</p>
+<ul>
+<li>将浅层目标特征 $f_2(\mathbf Z)$ 发送到 subnet $\mathbf U_1$ 中，以生成 initial template $\beta$，用于计算 initial loss $L$。</li>
+<li>浅层目标特征的梯度通过反传计算，并发送到另一个 subnet $\mathbf U_2$ 进行非线性变换以进行更好的梯度表示。</li>
+<li>转换后的梯度添加到浅层目标特征中，以获得更新的目标表示。</li>
+</ul>
+<h3 id="Basic-Tracker"><a href="#Basic-Tracker" class="headerlink" title="Basic Tracker"></a>Basic Tracker</h3><p>为了提高模板 $\beta$ 的判别能力，本文设计了 update branch $U(\alpha)$ 来探索梯度的丰富信息：</p>
+<img src="https://i.loli.net/2020/05/04/pL5PkgSOd8xQ97T.png" alt="image-20200504173116627" style="zoom:50%;" />
+
+<p>其中 $\alpha$ 是 update branch 的参数，不仅能够通过梯度捕获 $\mathbf Z$ 中的模板信息，还能捕获 $\mathbf X$ 中的背景信息。</p>
+<h3 id="Template-Generation"><a href="#Template-Generation" class="headerlink" title="Template Generation"></a>Template Generation</h3><h4 id="Initial-Embedding"><a href="#Initial-Embedding" class="headerlink" title="Initial Embedding"></a>Initial Embedding</h4><p>首先得到初始模板：</p>
+<img src="https://i.loli.net/2020/05/04/R2jFfAcG6oubvVX.png" alt="image-20200504173600916" style="zoom:50%;" />
+
+<p>然后计算 initial score map $\mathbf S$。</p>
+<h4 id="Gradient-Calculation"><a href="#Gradient-Calculation" class="headerlink" title="Gradient Calculation"></a>Gradient Calculation</h4><p>计算梯度：</p>
+<img src="https://i.loli.net/2020/05/04/x43PqSEBKlow9f7.png" alt="image-20200504173851674" style="zoom:50%;" />
+
+<p>更新的目标特征为：</p>
+<img src="https://i.loli.net/2020/05/04/ns9OJp8duG2Z7RU.png" alt="image-20200504173946076" style="zoom:50%;" />
+
+<p>其中，$U_1$ 的梯度是 $U_2$ 的输入，以计算最终损失，因此在 $U_1$ 的训练中引入了  second-order guidance。</p>
+<h4 id="Template-Update"><a href="#Template-Update" class="headerlink" title="Template Update"></a>Template Update</h4><p>最终的 score map 为：</p>
+<img src="https://i.loli.net/2020/05/04/yrVUgdnHwYNxq31.png" alt="image-20200504174332038" style="zoom:50%;" />
+
+<p>这项工作首次利用梯度的判别信息来更新 siamfc 的模板。</p>
+<h3 id="Template-Generalization"><a href="#Template-Generalization" class="headerlink" title="Template Generalization"></a>Template Generalization</h3><h4 id="Problem-of-Basic-Optimization"><a href="#Problem-of-Basic-Optimization" class="headerlink" title="Problem of Basic Optimization"></a>Problem of Basic Optimization</h4><p>训练鲁棒的 GradNet 的任务非常艰巨，原因有两个：</p>
+<ol>
+<li>网络倾向于使用模板的表观而不是梯度进行跟踪。因为学习使用梯度比学习使用表观更困难。</li>
+<li>网络易于过拟合。</li>
+</ol>
+<p>为了解决这些问题，本文提出  template generalization 方法，可以有效探索梯度信息并避免过拟合。</p>
+<h4 id="Template-Generalization-1"><a href="#Template-Generalization-1" class="headerlink" title="Template Generalization"></a>Template Generalization</h4><p>我们的目标是迫使 update branch 专注于学习梯度，并避免过拟合。因此我们提出 template generalization method。</p>
+<p>我们采用来自不同视频（4个）的搜索区域，以获得通用模板，使得该通用模板在所有搜索区域上表现良好。</p>
+<p>与传统方法的主要区别是，利用一个模板（而不是四个模板）来搜索来自不同视频的四个图像上的目标。</p>
+<p>该策略强制网络在离线训练期间将注意力集中在梯度上。Subnet $U_1$ 和 $U_2$ 需要根据梯度矫正初始未对齐的模板，从而获得强大的能力来根据梯度更新模板。</p>
+<h2 id="Experiment"><a href="#Experiment" class="headerlink" title="Experiment"></a>Experiment</h2><h3 id="Ablation-Analysis"><a href="#Ablation-Analysis" class="headerlink" title="Ablation Analysis"></a>Ablation Analysis</h3><h4 id="Self-comparison"><a href="#Self-comparison" class="headerlink" title="Self-comparison"></a>Self-comparison</h4><p>设计了几种变体：</p>
+<ol>
+<li>Ours w/o M：没有 template generalization 训练过程。</li>
+<li>Ours w/o MG：没有 template generalization 训练过程和 gradient application。</li>
+<li>Ours w/o U：没有 template update。</li>
+<li>Ours w 2U：两次用到的自网络 $U_1$ 不共享参数。</li>
+<li>Ours-baseline：siamfc。</li>
+</ol>
+<img src="https://i.loli.net/2020/05/04/ojSsNGyTH8pd9RV.png" alt="image-20200504191423375" style="zoom:50%;" />
+
+<h4 id="Training-Analysis"><a href="#Training-Analysis" class="headerlink" title="Training Analysis"></a>Training Analysis</h4><p>为了进一步分析 template generation，可视化了在两种训练方法下（有/无 template generation）的 initial score map 和 optimal score map。</p>
+<img src="https://i.loli.net/2020/05/04/W3hecmKENVT1Dni.png" alt="image-20200504192304218" style="zoom:50%;" />
+
+<p>由 (a) (c) 对比可知，(a) 更嘈杂，而 (c) 直接就在目标位置具有高响应。因此，通过 template generalization 训练的模型在 initial embedding 期间学习了不同的任务，得到了用于检测目标和 background clutter 的通用模板。这种方式为模型提供了更大的判别性梯度。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Tracking/" rel="tag"># Tracking</a>
+              <a href="/tags/ICCV2019/" rel="tag"># ICCV2019</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/05/04/ICCV2019-Bridging-the-Gap-Between-Detection-and-Tracking-A-Unified-Approach/" rel="prev" title="[ICCV2019] Bridging the Gap Between Detection and Tracking: A Unified Approach">
+      <i class="fa fa-chevron-left"></i> [ICCV2019] Bridging the Gap Between Detection and Tracking: A Unified Approach
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/05/06/AAAI2020-SPSTracker-Sub-Peak-Suppression-of-Response-Map-for-Robust-Object-Tracking/" rel="next" title="[AAAI2020] SPSTracker: Sub-Peak Suppression of Response Map for Robust Object Tracking">
+      [AAAI2020] SPSTracker: Sub-Peak Suppression of Response Map for Robust Object Tracking <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Abstract"><span class="nav-number">1.</span> <span class="nav-text">Abstract</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Introduction"><span class="nav-number">2.</span> <span class="nav-text">Introduction</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Related-Work"><span class="nav-number">3.</span> <span class="nav-text">Related Work</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Model-Updating-in-Tracking"><span class="nav-number">3.1.</span> <span class="nav-text">Model Updating in Tracking</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Template-Combination"><span class="nav-number">3.1.1.</span> <span class="nav-text">Template Combination</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Gradient-descent-based-approaches"><span class="nav-number">3.1.2.</span> <span class="nav-text">Gradient-descent based approaches</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Correlation-based-Tracking"><span class="nav-number">3.1.3.</span> <span class="nav-text">Correlation based Tracking</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Proposed-Algorithm"><span class="nav-number">4.</span> <span class="nav-text">Proposed Algorithm</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Basic-Tracker"><span class="nav-number">4.1.</span> <span class="nav-text">Basic Tracker</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Template-Generation"><span class="nav-number">4.2.</span> <span class="nav-text">Template Generation</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Initial-Embedding"><span class="nav-number">4.2.1.</span> <span class="nav-text">Initial Embedding</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Gradient-Calculation"><span class="nav-number">4.2.2.</span> <span class="nav-text">Gradient Calculation</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Template-Update"><span class="nav-number">4.2.3.</span> <span class="nav-text">Template Update</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Template-Generalization"><span class="nav-number">4.3.</span> <span class="nav-text">Template Generalization</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Problem-of-Basic-Optimization"><span class="nav-number">4.3.1.</span> <span class="nav-text">Problem of Basic Optimization</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Template-Generalization-1"><span class="nav-number">4.3.2.</span> <span class="nav-text">Template Generalization</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Experiment"><span class="nav-number">5.</span> <span class="nav-text">Experiment</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Ablation-Analysis"><span class="nav-number">5.1.</span> <span class="nav-text">Ablation Analysis</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Self-comparison"><span class="nav-number">5.1.1.</span> <span class="nav-text">Self-comparison</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Training-Analysis"><span class="nav-number">5.1.2.</span> <span class="nav-text">Training Analysis</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">zhbli</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">119</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">46</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zhbli</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+</body>
+</html>

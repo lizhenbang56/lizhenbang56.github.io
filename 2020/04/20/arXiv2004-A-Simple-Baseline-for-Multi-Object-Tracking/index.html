@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="Abstract现有 MOT 算法的问题：很少有算法在单个网络中同时进行目标检测和 reid。现有的尝试导致性能降低。 原因：现有的尝试未能正确学习 reid 分支。 本文的解决方案：分析了未能正确学习 reid 分支的原因，并提出了改进。 性能：  https:&#x2F;&#x2F;github.com&#x2F;ifzhang&#x2F;FairMOT 速度：30 FPS。 MOT17_MOTA：67.5（private_dete">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[arXiv2004] A Simple Baseline for Multi-Object Tracking">
+<meta property="og:url" content="http://yoursite.com/2020/04/20/arXiv2004-A-Simple-Baseline-for-Multi-Object-Tracking/index.html">
+<meta property="og:site_name" content="zhbli">
+<meta property="og:description" content="Abstract现有 MOT 算法的问题：很少有算法在单个网络中同时进行目标检测和 reid。现有的尝试导致性能降低。 原因：现有的尝试未能正确学习 reid 分支。 本文的解决方案：分析了未能正确学习 reid 分支的原因，并提出了改进。 性能：  https:&#x2F;&#x2F;github.com&#x2F;ifzhang&#x2F;FairMOT 速度：30 FPS。 MOT17_MOTA：67.5（private_dete">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://i.loli.net/2020/04/20/xTV9UOWnyFGZtJk.png">
+<meta property="og:image" content="https://i.loli.net/2020/04/20/TQsqUZlCJ2NmRHP.png">
+<meta property="og:image" content="https://i.loli.net/2020/04/20/bfgBwLqz4cxNrQa.png">
+<meta property="article:published_time" content="2020-04-20T05:30:11.000Z">
+<meta property="article:modified_time" content="2020-04-20T06:31:52.000Z">
+<meta property="article:author" content="zhbli">
+<meta property="article:tag" content="Multi-Object Tracking">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.loli.net/2020/04/20/xTV9UOWnyFGZtJk.png">
+
+<link rel="canonical" href="http://yoursite.com/2020/04/20/arXiv2004-A-Simple-Baseline-for-Multi-Object-Tracking/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>[arXiv2004] A Simple Baseline for Multi-Object Tracking | zhbli</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">zhbli</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-schedule">
+
+    <a href="/schedule/" rel="section"><i class="fa fa-fw fa-calendar"></i>Schedule</a>
+
+  </li>
+        <li class="menu-item menu-item-sitemap">
+
+    <a href="/sitemap.xml" rel="section"><i class="fa fa-fw fa-sitemap"></i>Sitemap</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="fa fa-fw fa-heartbeat"></i>Commonweal 404</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/04/20/arXiv2004-A-Simple-Baseline-for-Multi-Object-Tracking/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="zhbli">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="zhbli">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          [arXiv2004] A Simple Baseline for Multi-Object Tracking
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2020-04-20 13:30:11 / Modified: 14:31:52" itemprop="dateCreated datePublished" datetime="2020-04-20T13:30:11+08:00">2020-04-20</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="Abstract"><a href="#Abstract" class="headerlink" title="Abstract"></a>Abstract</h2><p>现有 MOT 算法的问题：很少有算法在单个网络中同时进行目标检测和 reid。现有的尝试导致性能降低。</p>
+<p>原因：现有的尝试未能正确学习 reid 分支。</p>
+<p>本文的解决方案：分析了未能正确学习 reid 分支的原因，并提出了改进。</p>
+<p>性能：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://github.com/ifzhang/FairMOT">https://github.com/ifzhang/FairMOT</a></li>
+<li>速度：30 FPS。</li>
+<li>MOT17_MOTA：67.5（private_detector）。</li>
+<li>MOT20_MOTA：58.7（private_detector）。</li>
+</ul>
+<h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><p>分析了在单个网络中同时进行目标检测和 reid 的三个关键因素：</p>
+<ol>
+<li>anchors 不适用于 reid。<ol>
+<li>原因：<ol>
+<li>表示不同图像块的多个 anchors 可能对应于同一个物体，这导致网络的严重歧义。</li>
+<li>下采样为 8，这对 reid 来说太粗糙了。这导致目标中心与特征中心无法对齐。</li>
+</ol>
+</li>
+<li>方案：<ul>
+<li>将 MOT 问题视为在高分辨率特征图上的 pixel-wise 关键点（即目标中心）估计问题和 identity classification 问题。</li>
+</ul>
+</li>
+</ol>
+</li>
+<li>多层特征聚合。<ul>
+<li>这对 MOT 很重要，因为 reid 需要利用低层和高层特征来处理小目标和大目标，从而提成了对物体尺度变化的适应性。</li>
+</ul>
+</li>
+<li>reid 特征的维度。<ul>
+<li>低维特征对 MOT 更好。因为训练数据少，而我们无法使用 reid 数据集。减少了过拟合风险，提高了鲁棒性。</li>
+</ul>
+</li>
+</ol>
+<h2 id="Related-work"><a href="#Related-work" class="headerlink" title="Related work"></a>Related work</h2><p>MOT 分为两阶段跟踪和一阶段跟踪：</p>
+<ul>
+<li>两阶段跟踪<ul>
+<li>优点：可以针对每个任务使用最佳模型而无需折中。</li>
+<li>缺点：速度慢，无法实现权重共享。</li>
+</ul>
+</li>
+<li>一阶段跟踪<ul>
+<li>优点：速度块，权重共享。</li>
+<li>缺点：无法很好地学习 reid 分支。</li>
+</ul>
+</li>
+</ul>
+<h2 id="The-Technical-Approach"><a href="#The-Technical-Approach" class="headerlink" title="The Technical Approach"></a>The Technical Approach</h2><p>网络分为三部分：</p>
+<ol>
+<li>backbone</li>
+<li>目标检测分支</li>
+<li>reid 分支</li>
+</ol>
+<h3 id="Backbone-Network"><a href="#Backbone-Network" class="headerlink" title="Backbone Network"></a>Backbone Network</h3><p>使用基于 DLA 的变种 [45] 的 resnet34，下采样率为 4。</p>
+<blockquote>
+<p>Zhou, X., Wang, D., Kr¨ahenb¨uhl, P.: Objects as points. arXiv preprint arXiv:1904.07850 (2019)</p>
+</blockquote>
+<h3 id="Object-Detection-Branch"><a href="#Object-Detection-Branch" class="headerlink" title="Object Detection Branch"></a>Object Detection Branch</h3><p>与 [45] 相同，将目标检测视为基于中心点的边框回归任务，在 backbone 上附加 3 个  regression heads，分别用于估计 heatmaps，object center offsets 和边框尺寸。每个 head 一个是 256 通道的 $3\times 3$ 卷积，后接一个 $1\times 1$ 卷积。</p>
+<h4 id="Heatmap-Head"><a href="#Heatmap-Head" class="headerlink" title="Heatmap Head"></a>Heatmap Head</h4><p>heatmap 的尺寸是 $1\times H \times W$ （与特征图尺寸相同）。Ground truth 是以目标为中心的高斯。</p>
+<h4 id="Center-Offset-Head"><a href="#Center-Offset-Head" class="headerlink" title="Center Offset Head"></a>Center Offset Head</h4><p>由于下采样率为 4，必然引入误差。这对检测的影响不大，但对跟踪至关重要。因为应该根据准确的目标中心提取 reid 特征。</p>
+<h4 id="Box-Size-Head"><a href="#Box-Size-Head" class="headerlink" title="Box Size Head"></a>Box Size Head</h4><p>与 reid 无关。</p>
+<h3 id="Identity-Embedding-Branch"><a href="#Identity-Embedding-Branch" class="headerlink" title="Identity Embedding Branch"></a>Identity Embedding Branch</h3><p>该分支的目的是生成可以区分不同目标的特征。通过在特征图上卷积为每个位置得到 128 为嵌入向量。</p>
+<h4 id="Loss-Functions"><a href="#Loss-Functions" class="headerlink" title="Loss Functions"></a>Loss Functions</h4><h4 id="Heatmap-Loss"><a href="#Heatmap-Loss" class="headerlink" title="Heatmap Loss"></a>Heatmap Loss</h4><img src="https://i.loli.net/2020/04/20/xTV9UOWnyFGZtJk.png" alt="image-20200420133241614" style="zoom:50%;" />
+
+<h4 id="Offset-and-Size-Loss"><a href="#Offset-and-Size-Loss" class="headerlink" title="Offset and Size Loss"></a>Offset and Size Loss</h4><img src="https://i.loli.net/2020/04/20/TQsqUZlCJ2NmRHP.png" alt="image-20200420133310654" style="zoom:50%;" />
+
+<h4 id="Identity-Embedding-Loss"><a href="#Identity-Embedding-Loss" class="headerlink" title="Identity Embedding Loss"></a>Identity Embedding Loss</h4><p>将身份嵌入视为分类任务：将训练集中具有同一人物的目标视作同一类。</p>
+<img src="https://i.loli.net/2020/04/20/bfgBwLqz4cxNrQa.png" alt="image-20200420133335418" style="zoom:50%;" />
+
+<p>$\mathbf{p}(k)$ 为 class distribution vector。</p>
+<p>$\mathbf{L}^i(k)$ 为 GT class label 的 one-hot 表示。</p>
+<p>$K$ 是类别数。</p>
+<p>N 是图像中的目标数。</p>
+<h3 id="Online-Tracking"><a href="#Online-Tracking" class="headerlink" title="Online Tracking"></a>Online Tracking</h3><p>使用 reid 特征的距离，以及 IoU，来链接两帧的边框。</p>
+<h3 id="Implementation-Details"><a href="#Implementation-Details" class="headerlink" title="Implementation Details"></a>Implementation Details</h3><p>使用 DLA-34 的变种 [45] 作为 backbone。使用 coco 预训练参数对模型初始化。</p>
+<p>在两个 RTX 2080 GPU 上的训练时间约 30 小时。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Multi-Object-Tracking/" rel="tag"># Multi-Object Tracking</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/04/19/NIPS2016-Matching-Networks-for-One-Shot-Learning/" rel="prev" title="[NIPS2016] Matching Networks for One Shot Learning">
+      <i class="fa fa-chevron-left"></i> [NIPS2016] Matching Networks for One Shot Learning
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/04/20/CVPR2020-Learning-Representations-by-Predicting-Bags-of-Visual-Words/" rel="next" title="[CVPR2020] Learning Representations by Predicting Bags of Visual Words">
+      [CVPR2020] Learning Representations by Predicting Bags of Visual Words <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Abstract"><span class="nav-number">1.</span> <span class="nav-text">Abstract</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Introduction"><span class="nav-number">2.</span> <span class="nav-text">Introduction</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Related-work"><span class="nav-number">3.</span> <span class="nav-text">Related work</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#The-Technical-Approach"><span class="nav-number">4.</span> <span class="nav-text">The Technical Approach</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Backbone-Network"><span class="nav-number">4.1.</span> <span class="nav-text">Backbone Network</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Object-Detection-Branch"><span class="nav-number">4.2.</span> <span class="nav-text">Object Detection Branch</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Heatmap-Head"><span class="nav-number">4.2.1.</span> <span class="nav-text">Heatmap Head</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Center-Offset-Head"><span class="nav-number">4.2.2.</span> <span class="nav-text">Center Offset Head</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Box-Size-Head"><span class="nav-number">4.2.3.</span> <span class="nav-text">Box Size Head</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Identity-Embedding-Branch"><span class="nav-number">4.3.</span> <span class="nav-text">Identity Embedding Branch</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Loss-Functions"><span class="nav-number">4.3.1.</span> <span class="nav-text">Loss Functions</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Heatmap-Loss"><span class="nav-number">4.3.2.</span> <span class="nav-text">Heatmap Loss</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Offset-and-Size-Loss"><span class="nav-number">4.3.3.</span> <span class="nav-text">Offset and Size Loss</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Identity-Embedding-Loss"><span class="nav-number">4.3.4.</span> <span class="nav-text">Identity Embedding Loss</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Online-Tracking"><span class="nav-number">4.4.</span> <span class="nav-text">Online Tracking</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Implementation-Details"><span class="nav-number">4.5.</span> <span class="nav-text">Implementation Details</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">zhbli</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">119</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">46</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zhbli</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+</body>
+</html>

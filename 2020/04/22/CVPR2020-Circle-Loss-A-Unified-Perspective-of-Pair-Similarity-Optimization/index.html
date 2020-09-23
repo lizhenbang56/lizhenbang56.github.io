@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="Abstract本文针对深度特征学习提出了两个相似性优化视角，旨在最大化类内相似度 $s_p$ 并最小化类间相似度 $s_n$。 我们发现大多数损失函数，包括 triplet loss 和 softmax+cross-entropy loss，将 $s_n$ 和 $s_p$ 嵌入到 similarity pairs 并减少 $(s_n-s_p)$。这种优化方式是不灵活的，因为对每个相似度得分的惩罚">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[CVPR2020] Circle Loss: A Unified Perspective of Pair Similarity Optimization">
+<meta property="og:url" content="http://yoursite.com/2020/04/22/CVPR2020-Circle-Loss-A-Unified-Perspective-of-Pair-Similarity-Optimization/index.html">
+<meta property="og:site_name" content="zhbli">
+<meta property="og:description" content="Abstract本文针对深度特征学习提出了两个相似性优化视角，旨在最大化类内相似度 $s_p$ 并最小化类间相似度 $s_n$。 我们发现大多数损失函数，包括 triplet loss 和 softmax+cross-entropy loss，将 $s_n$ 和 $s_p$ 嵌入到 similarity pairs 并减少 $(s_n-s_p)$。这种优化方式是不灵活的，因为对每个相似度得分的惩罚">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://i.loli.net/2020/04/22/Js9CdyA5hfRU8ic.png">
+<meta property="article:published_time" content="2020-04-22T04:52:22.000Z">
+<meta property="article:modified_time" content="2020-04-22T06:05:50.000Z">
+<meta property="article:author" content="zhbli">
+<meta property="article:tag" content="CVPR2020">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.loli.net/2020/04/22/Js9CdyA5hfRU8ic.png">
+
+<link rel="canonical" href="http://yoursite.com/2020/04/22/CVPR2020-Circle-Loss-A-Unified-Perspective-of-Pair-Similarity-Optimization/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>[CVPR2020] Circle Loss: A Unified Perspective of Pair Similarity Optimization | zhbli</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">zhbli</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-schedule">
+
+    <a href="/schedule/" rel="section"><i class="fa fa-fw fa-calendar"></i>Schedule</a>
+
+  </li>
+        <li class="menu-item menu-item-sitemap">
+
+    <a href="/sitemap.xml" rel="section"><i class="fa fa-fw fa-sitemap"></i>Sitemap</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="fa fa-fw fa-heartbeat"></i>Commonweal 404</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/04/22/CVPR2020-Circle-Loss-A-Unified-Perspective-of-Pair-Similarity-Optimization/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="zhbli">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="zhbli">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          [CVPR2020] Circle Loss: A Unified Perspective of Pair Similarity Optimization
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2020-04-22 12:52:22 / Modified: 14:05:50" itemprop="dateCreated datePublished" datetime="2020-04-22T12:52:22+08:00">2020-04-22</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="Abstract"><a href="#Abstract" class="headerlink" title="Abstract"></a>Abstract</h2><p>本文针对深度特征学习提出了两个相似性优化视角，旨在最大化类内相似度 $s_p$ 并最小化类间相似度 $s_n$。</p>
+<p>我们发现大多数损失函数，包括 triplet loss 和 softmax+cross-entropy loss，将 $s_n$ 和 $s_p$ 嵌入到 similarity pairs 并减少 $(s_n-s_p)$。这种优化方式是不灵活的，因为对每个相似度得分的惩罚被限制为相等。</p>
+<p>我们的直觉是，如果相似性得分距离最优值很远，则应予以强调。为此，我们只需对每个相似度重新加权，以强调未优化的相似度得分。这就是 circle loss，因为决策边界是圆形的。</p>
+<p>circle loss 为两种基本的深度特征学习方法构建了统一的公式：</p>
+<ul>
+<li>learning with class-level labels</li>
+<li>learning with pair-wise labels</li>
+</ul>
+<h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><p>无论是 triplet loss 还是 softmax+cross-entropy loss，都致力于减少 $(s_n-s_p)$。在 $(s_n-s_p)$ 中，增加 $s_p$ 相当于减少 $s_n$。我们认为这种对称优化方式容易导致以下两个问题：</p>
+<ol>
+<li>缺乏优化灵活性。对 $s_n$ 和 $s_p$ 的惩罚力度是相等的，它们的梯度幅度相同。特殊情况下，如 $s_p$ 很小，而 $s_n$ 早已是 0，此时仍然会以大的梯度惩罚 $s_n$。这是低效且不合理的。</li>
+<li>收敛状态不明确。优化 $(s_n-s_p)$ 通常导致决策边界 $s_n-s_p = m$，$m$ 是 margin。</li>
+</ol>
+<p>我们认为，不同的相似性得分应该具有不同的惩罚力度。如果一个相似性得分远未被优化，应该具有更强的惩罚。反之亦然。因此我们将 $(s_n-s_p)$ 推广为 $(\alpha_n s_n-\alpha_p s_p)$。这导致优化边界是 $(\alpha_n s_n-\alpha_p s_p) = m$，这是在 $(s_n-s_p)$ 空间种的一个圆，因此称作 circle loss。</p>
+<p>虽然很简单，circle loss 从本质上重塑了深度特征学习，体现在如下方面：</p>
+<ol>
+<li>统一的损失函数：我们为两种基本的学习方法（使用 class-level labels 和 pair-wise labels）提出了统一的损失函数。</li>
+<li>灵活的优化：不同的相似性得分具有不同的惩罚力度。</li>
+<li>确定的收敛状态：确立了明确的优化目标并有利于可分性。</li>
+</ol>
+<h2 id="A-Unified-Perspective"><a href="#A-Unified-Perspective" class="headerlink" title="A Unified Perspective"></a>A Unified Perspective</h2><p>在 cosine 相似性度量下，我们希望 $s_p \rightarrow 1$，$s_n \rightarrow 0$。</p>
+<p>给定 class-level labels，常用的方法有：L2-Softmax，Large-margin Softmax，Angular Softmax，NormFace，AM-Softmax，CosFace，ArcFace。</p>
+<p>给定 pair-wise labels，常用的方法有：constrastive loss，triplet loss，Lifted-Structure loss，N-pair loss，Histogram loss，Angular loss，Margin based loss，Multi-Similarity loss。</p>
+<p>给定特征空间的一个样本 $x$，假设有 $K$ 个类内相似度得分和 $L$ 个类间相似度得分，分别定义为 ${s^i_p}(i=1,2,…,K)$ 和 ${s^j_n}(j=1,2,…,L)$。</p>
+<p>为了最小化每个 $s^j_n$ 同时最大化每个 $s^i_p$，我们提出了统一的损失函数：<img src="https://i.loli.net/2020/04/22/Js9CdyA5hfRU8ic.png" alt="image-20200422135329596" style="zoom:50%;" /></p>
+<p>该函数通过简单修改就能退化成 triplet loss 或 classification loss。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/CVPR2020/" rel="tag"># CVPR2020</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/04/21/arXiv2001-Deep-Learning-for-Person-Re-identification-A-Survey-and-Outlook/" rel="prev" title="[arXiv2001] Deep Learning for Person Re-identification: A Survey and Outlook">
+      <i class="fa fa-chevron-left"></i> [arXiv2001] Deep Learning for Person Re-identification: A Survey and Outlook
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/04/22/CVPR2018-Learning-to-Compare-Relation-Network-for-Few-Shot-Learning/" rel="next" title="[CVPR2018] Learning to Compare: Relation Network for Few-Shot Learning">
+      [CVPR2018] Learning to Compare: Relation Network for Few-Shot Learning <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Abstract"><span class="nav-number">1.</span> <span class="nav-text">Abstract</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Introduction"><span class="nav-number">2.</span> <span class="nav-text">Introduction</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#A-Unified-Perspective"><span class="nav-number">3.</span> <span class="nav-text">A Unified Perspective</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">zhbli</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">119</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">46</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zhbli</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+</body>
+</html>

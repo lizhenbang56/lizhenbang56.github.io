@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="AbstractEnergy-based models (EBMs) 在计算机视觉中越来越流行。尽管常用于 generative image modeling，但最近的工作将 EBMs 用于回归任务，并在目标检测和目标跟踪中达到了最好的性能。然而，训练 EBMs 具有挑战性。尽管已经探索了不同的技术来进行 generative modeling，将 EBM 应用于回归不是一个充分研究的问题，因此尚">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[arXiv2005] How to Train Your Energy-Based Model for Regression">
+<meta property="og:url" content="http://yoursite.com/2020/05/06/arXiv2005-How-to-Train-Your-Energy-Based-Model-for-Regression/index.html">
+<meta property="og:site_name" content="zhbli">
+<meta property="og:description" content="AbstractEnergy-based models (EBMs) 在计算机视觉中越来越流行。尽管常用于 generative image modeling，但最近的工作将 EBMs 用于回归任务，并在目标检测和目标跟踪中达到了最好的性能。然而，训练 EBMs 具有挑战性。尽管已经探索了不同的技术来进行 generative modeling，将 EBM 应用于回归不是一个充分研究的问题，因此尚">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://i.loli.net/2020/05/06/gPLJZYyFAuiQX4d.png">
+<meta property="og:image" content="https://i.loli.net/2020/05/06/sjDdXwQvE5CRimL.png">
+<meta property="og:image" content="https://i.loli.net/2020/05/06/sJnom5HPrvTE1zk.png">
+<meta property="og:image" content="https://i.loli.net/2020/05/06/cU8HdE5xfvRT4pu.png">
+<meta property="og:image" content="https://i.loli.net/2020/05/06/AYQsSjT3qm2cCat.png">
+<meta property="og:image" content="https://i.loli.net/2020/05/06/UoMVzx3h5L9ceAG.png">
+<meta property="og:image" content="https://i.loli.net/2020/05/06/F9Am5QlTqH7hyaX.png">
+<meta property="og:image" content="https://i.loli.net/2020/05/06/HStlRrVAoNb6GZw.png">
+<meta property="og:image" content="https://i.loli.net/2020/05/06/Y24hxyqQpuVMASj.png">
+<meta property="og:image" content="https://i.loli.net/2020/05/06/GVeXWRoCjZMLaFU.png">
+<meta property="og:image" content="https://i.loli.net/2020/05/06/hxmLUJPj8i1kdfH.png">
+<meta property="og:image" content="https://i.loli.net/2020/05/06/ge7azCrPWKuL9hj.png">
+<meta property="article:published_time" content="2020-05-06T07:58:43.000Z">
+<meta property="article:modified_time" content="2020-05-13T10:27:26.000Z">
+<meta property="article:author" content="zhbli">
+<meta property="article:tag" content="Tracking">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.loli.net/2020/05/06/gPLJZYyFAuiQX4d.png">
+
+<link rel="canonical" href="http://yoursite.com/2020/05/06/arXiv2005-How-to-Train-Your-Energy-Based-Model-for-Regression/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>[arXiv2005] How to Train Your Energy-Based Model for Regression | zhbli</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">zhbli</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-schedule">
+
+    <a href="/schedule/" rel="section"><i class="fa fa-fw fa-calendar"></i>Schedule</a>
+
+  </li>
+        <li class="menu-item menu-item-sitemap">
+
+    <a href="/sitemap.xml" rel="section"><i class="fa fa-fw fa-sitemap"></i>Sitemap</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="fa fa-fw fa-heartbeat"></i>Commonweal 404</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/05/06/arXiv2005-How-to-Train-Your-Energy-Based-Model-for-Regression/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="zhbli">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="zhbli">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          [arXiv2005] How to Train Your Energy-Based Model for Regression
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-05-06 15:58:43" itemprop="dateCreated datePublished" datetime="2020-05-06T15:58:43+08:00">2020-05-06</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-05-13 18:27:26" itemprop="dateModified" datetime="2020-05-13T18:27:26+08:00">2020-05-13</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Tracking/" itemprop="url" rel="index"><span itemprop="name">Tracking</span></a>
+                </span>
+                  , 
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Tracking/Loss/" itemprop="url" rel="index"><span itemprop="name">Loss</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="Abstract"><a href="#Abstract" class="headerlink" title="Abstract"></a>Abstract</h2><p><code>Energy-based models</code> (EBMs) 在计算机视觉中越来越流行。尽管常用于 generative image modeling，但最近的工作将 EBMs 用于回归任务，并在目标检测和目标跟踪中达到了最好的性能。然而，训练 EBMs 具有挑战性。尽管已经探索了不同的技术来进行 generative modeling，将 EBM 应用于回归不是一个充分研究的问题，因此尚不清楚如何训练 EBMs 以获得最佳的回归性能。本文首次对该问题进行详细研究。</p>
+<p>本文提出 noise contrastive estimation 的扩展方法，并与六个 1D 回归/目标检测方法进行了性能比较。比较结果表明，本文提出的训练方法最好。</p>
+<p>性能：</p>
+<ul>
+<li><p><a target="_blank" rel="noopener" href="https://github.com/fregu856/ebms_regression">https://github.com/fregu856/ebms_regression</a></p>
+</li>
+<li><p>LaSOT_AUC：63.7%。</p>
+</li>
+<li><p>TrackingNet_Success：78.7%。</p>
+</li>
+</ul>
+<h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><p>EBMs 通过参数化 scalar function $f_\theta(x)$ 来执行概率密度：</p>
+<img src="https://i.loli.net/2020/05/06/gPLJZYyFAuiQX4d.png" alt="image-20200506162716258" style="zoom:50%;" />
+
+<p>最近的工作探索了 conditional EBMs 用于回归的一般公式，在目标检测和目标跟踪上表现出色。</p>
+<p>给定观测到的 input-target pairs，回归需要从 input $x$ 预测 continuous target $y$。</p>
+<p>在 [15, 9] 中，通过学习 conditional EBM $p(y|x;\theta)$，在给定 input $x$ 的情况下捕获 target value $y$ 的分布，解决了这一问题。测试时，使用梯度上升最大化 $p(y|x;\theta)$ w.r.t. $y$，产生准确的预测。</p>
+<blockquote>
+<p>[15] Fredrik K Gustafsson, Martin Danelljan, Goutam Bhat, and Thomas B Sch¨on. <strong>Learning deep conditional target densities for accurate regression</strong>. arXiv preprint arXiv:1909.12297, 2019.</p>
+<p>[9] Martin Danelljan, Luc Van Gool, and Radu Timofte. <strong>Probabilistic regression for visual tracking</strong>. In The IEEE Conference on Computer Vision and Pattern Recognition (CVPR), June 2020.</p>
+</blockquote>
+<p>本文详细研究使用 EBMs 进行回归，以进一步提高性能。</p>
+<p>EBMs 的训练具有挑战性，因为计算 $p(x;\theta)$ 设计棘手的积分，这使得使用  standard maximum likelihood (ML) 的学习变得复杂。虽然在 generative modeling 中探索了多种技术，包括 alternative estimation methods 和 approximations based on Markov chain Monte Carlo (MCMC)。但是，EMBs 在回归中的应用并未深入研究。[15, 9] 都将  Monte Carlo importance sampling 应用于近似 intractable integrals，这种方法在数据维数方面很难扩展。因此，如何训练 EMSs $p(y|x;\theta)$ 以在计算机视觉的回归任务上获得最佳性能，是本文研究的内容。</p>
+<p>本文的贡献是：提出了一种 noise contrastive estimation (NCE) 的扩展，以训练用于回归任务的 EBMs。本文提出的 NCE+ 可以理解为 NCE 的直接推广，考虑了真实数据集注释过程中的噪声。</p>
+<p>本文将 NCE+ 应用于目标跟踪任务，取得了良好的性能。</p>
+<h2 id="Energy-Based-Models-for-Regression"><a href="#Energy-Based-Models-for-Regression" class="headerlink" title="Energy-Based Models for Regression"></a>Energy-Based Models for Regression</h2><h3 id="Problem-amp-Model-Definition"><a href="#Problem-amp-Model-Definition" class="headerlink" title="Problem &amp; Model Definition"></a>Problem &amp; Model Definition</h3><p>在有监督回归问题中，定义 $\mathcal D$ 为独立同分布的 input-target pairs，$\mathcal D = {(x_i,y_i)}^N_{i=1}, (x_i,y_i) \sim p(x,y)$。给定输入 $x^<em>\in \mathcal X$，任务是学习如何预测 target $y^</em>\in \mathcal Y$。Target Space $\mathcal Y$ 是连续的，当 $K\ge1$ 时，$\mathcal Y\in\mathbb R^K$。输入空间 $\mathcal X$ 通常对应于图像空间。</p>
+<p>与 [15, 9] 一样，我们通过创建 conditional target density $p(y|x)$ 的 <code>energy-based model</code> $p(y|x;\theta)$ 来解决这一问题。为此，本文使用模型参数 $\theta\in \mathbb R^P$ 来指定 DNN $f_\theta:\mathcal X\times\mathcal Y\rightarrow \mathbb R$。该 DNN 直接映射任何 input-target pair $(x,y)\in\mathcal X\times\mathcal Y$ 到 标量 $f_\theta(x,y)\in \mathbb R$。Conditional target density 的模型 $p(y|x;\theta)$ 定义为（公式 1）：</p>
+<img src="https://i.loli.net/2020/05/06/sjDdXwQvE5CRimL.png" alt="image-20200506205541087" style="zoom:50%;" />
+
+<h3 id="Training"><a href="#Training" class="headerlink" title="Training"></a>Training</h3><p>为了训练 EBM $p(y|x;\theta)$ 中的 DNN $f_\theta(x,y)$，可采用不同的技术将 density $p(y|x;\theta)$ 拟合到观测数据 ${(x_i,y_i)}_{i=1}^N$。一般来说，最常用的此类技术可能是 ML learning，最小化 negative log-likelihood (NLL)：</p>
+<img src="https://i.loli.net/2020/05/06/sJnom5HPrvTE1zk.png" alt="image-20200506211357809" style="zoom:50%;" />
+
+<p>但是，公式中的积分很难处理。[15, 9] 使用 importance sampling 来近似这种 intractable integrals。</p>
+<h4 id="ML-with-Importance-Sampling-ML-IS"><a href="#ML-with-Importance-Sampling-ML-IS" class="headerlink" title="ML with Importance Sampling (ML-IS)"></a>ML with Importance Sampling (ML-IS)</h4><img src="https://i.loli.net/2020/05/06/cU8HdE5xfvRT4pu.png" alt="image-20200506212132668" style="zoom:50%;" />
+
+<p>其中，${y^{(i,m)}}^M_{m=1}$ 是从依赖于 ground truth target $y_i$ 的 proposal distribution $q(y|y_i)$ 中抽取的 $M$ 个样本。在 [15] 中，$q(y|y_i)$ 是以 $y_i$ 为中心的 $K$ 个等权重高斯的混合：</p>
+<img src="https://i.loli.net/2020/05/06/AYQsSjT3qm2cCat.png" alt="image-20200506213134796" style="zoom:50%;" />
+
+<h4 id="KL-Divergence-with-Importance-Sampling-KLD-IS"><a href="#KL-Divergence-with-Importance-Sampling-KLD-IS" class="headerlink" title="KL Divergence with Importance Sampling (KLD-IS)"></a>KL Divergence with Importance Sampling (KLD-IS)</h4><img src="https://i.loli.net/2020/05/06/UoMVzx3h5L9ceAG.png" alt="image-20200506213401747" style="zoom:50%;" />
+
+<h4 id="ML-with-MCMC-ML-MCMC"><a href="#ML-with-MCMC-ML-MCMC" class="headerlink" title="ML with MCMC (ML-MCMC)"></a>ML with MCMC (ML-MCMC)</h4><img src="https://i.loli.net/2020/05/06/F9Am5QlTqH7hyaX.png" alt="image-20200506214202806" style="zoom:50%;" />
+
+<h4 id="Noise-Contrastive-Estimation-NCE"><a href="#Noise-Contrastive-Estimation-NCE" class="headerlink" title="Noise Contrastive Estimation (NCE)"></a>Noise Contrastive Estimation (NCE)</h4><p>作为 ML learning 的替代方法，[16] 提出 NCE 来估计 unnormalized parametric models：</p>
+<img src="https://i.loli.net/2020/05/06/HStlRrVAoNb6GZw.png" alt="image-20200506214512245" style="zoom:50%;" />
+
+<h4 id="Score-Matching-SM"><a href="#Score-Matching-SM" class="headerlink" title="Score Matching (SM)"></a>Score Matching (SM)</h4><img src="https://i.loli.net/2020/05/06/Y24hxyqQpuVMASj.png" alt="image-20200506214643665" style="zoom:50%;" />
+
+<h4 id="Denoising-Score-Matching-DSM"><a href="#Denoising-Score-Matching-DSM" class="headerlink" title="Denoising Score Matching (DSM)"></a>Denoising Score Matching (DSM)</h4><img src="https://i.loli.net/2020/05/06/GVeXWRoCjZMLaFU.png" alt="image-20200506214806683" style="zoom:50%;" />
+
+<h2 id="Proposed-Training-Method"><a href="#Proposed-Training-Method" class="headerlink" title="Proposed Training Method"></a>Proposed Training Method</h2><p>本文提出了 NCE 的扩展：NCE+。</p>
+<img src="https://i.loli.net/2020/05/06/hxmLUJPj8i1kdfH.png" alt="image-20200506215145790" style="zoom:50%;" />
+
+<h2 id="Visual-Tracking-Experiments"><a href="#Visual-Tracking-Experiments" class="headerlink" title="Visual Tracking Experiments"></a>Visual Tracking Experiments</h2><img src="https://i.loli.net/2020/05/06/ge7azCrPWKuL9hj.png" alt="image-20200506215238768" style="zoom:50%;" />
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Tracking/" rel="tag"># Tracking</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/05/06/AAAI2020-SPSTracker-Sub-Peak-Suppression-of-Response-Map-for-Robust-Object-Tracking/" rel="prev" title="[AAAI2020] SPSTracker: Sub-Peak Suppression of Response Map for Robust Object Tracking">
+      <i class="fa fa-chevron-left"></i> [AAAI2020] SPSTracker: Sub-Peak Suppression of Response Map for Robust Object Tracking
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/05/07/AAAI2020-Real-Time-Object-Tracking-via-Meta-Learning-Efficient-Model-Adaptation-and-One-Shot-Channel-Pruning/" rel="next" title="[AAAI2020] Real-Time Object Tracking via Meta-Learning: Efficient Model Adaptation and One-Shot Channel Pruning">
+      [AAAI2020] Real-Time Object Tracking via Meta-Learning: Efficient Model Adaptation and One-Shot Channel Pruning <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Abstract"><span class="nav-number">1.</span> <span class="nav-text">Abstract</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Introduction"><span class="nav-number">2.</span> <span class="nav-text">Introduction</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Energy-Based-Models-for-Regression"><span class="nav-number">3.</span> <span class="nav-text">Energy-Based Models for Regression</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Problem-amp-Model-Definition"><span class="nav-number">3.1.</span> <span class="nav-text">Problem &amp; Model Definition</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Training"><span class="nav-number">3.2.</span> <span class="nav-text">Training</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#ML-with-Importance-Sampling-ML-IS"><span class="nav-number">3.2.1.</span> <span class="nav-text">ML with Importance Sampling (ML-IS)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#KL-Divergence-with-Importance-Sampling-KLD-IS"><span class="nav-number">3.2.2.</span> <span class="nav-text">KL Divergence with Importance Sampling (KLD-IS)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#ML-with-MCMC-ML-MCMC"><span class="nav-number">3.2.3.</span> <span class="nav-text">ML with MCMC (ML-MCMC)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Noise-Contrastive-Estimation-NCE"><span class="nav-number">3.2.4.</span> <span class="nav-text">Noise Contrastive Estimation (NCE)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Score-Matching-SM"><span class="nav-number">3.2.5.</span> <span class="nav-text">Score Matching (SM)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Denoising-Score-Matching-DSM"><span class="nav-number">3.2.6.</span> <span class="nav-text">Denoising Score Matching (DSM)</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Proposed-Training-Method"><span class="nav-number">4.</span> <span class="nav-text">Proposed Training Method</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Visual-Tracking-Experiments"><span class="nav-number">5.</span> <span class="nav-text">Visual Tracking Experiments</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">zhbli</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">119</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">46</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zhbli</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+</body>
+</html>

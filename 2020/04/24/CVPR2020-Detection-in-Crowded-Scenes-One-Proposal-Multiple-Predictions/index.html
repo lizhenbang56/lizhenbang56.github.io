@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="Abstracthttps:&#x2F;&#x2F;github.com&#x2F;Purkialo&#x2F;CrowdDet 本文提出 proposal-based object detector，用于检测密集场景下高度重叠的物体。核心是令每个 proposal 预测一组 correlated instances 而不是仅预测一个。通过这种方式，相邻的 proposals 可以推断出相同的实例集，而不是区分 individuals，">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[CVPR2020] Detection in Crowded Scenes: One Proposal, Multiple Predictions">
+<meta property="og:url" content="http://yoursite.com/2020/04/24/CVPR2020-Detection-in-Crowded-Scenes-One-Proposal-Multiple-Predictions/index.html">
+<meta property="og:site_name" content="zhbli">
+<meta property="og:description" content="Abstracthttps:&#x2F;&#x2F;github.com&#x2F;Purkialo&#x2F;CrowdDet 本文提出 proposal-based object detector，用于检测密集场景下高度重叠的物体。核心是令每个 proposal 预测一组 correlated instances 而不是仅预测一个。通过这种方式，相邻的 proposals 可以推断出相同的实例集，而不是区分 individuals，">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://i.loli.net/2020/04/24/sONmBzkFbxn2MGr.png">
+<meta property="og:image" content="https://i.loli.net/2020/04/24/413GMibfKuIWdSU.png">
+<meta property="og:image" content="https://i.loli.net/2020/04/24/UAMQDyGHm5Tz4pk.png">
+<meta property="article:published_time" content="2020-04-24T05:47:17.000Z">
+<meta property="article:modified_time" content="2020-05-04T03:51:44.000Z">
+<meta property="article:author" content="zhbli">
+<meta property="article:tag" content="Object Detection">
+<meta property="article:tag" content="CVPR2020">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.loli.net/2020/04/24/sONmBzkFbxn2MGr.png">
+
+<link rel="canonical" href="http://yoursite.com/2020/04/24/CVPR2020-Detection-in-Crowded-Scenes-One-Proposal-Multiple-Predictions/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>[CVPR2020] Detection in Crowded Scenes: One Proposal, Multiple Predictions | zhbli</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">zhbli</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-schedule">
+
+    <a href="/schedule/" rel="section"><i class="fa fa-fw fa-calendar"></i>Schedule</a>
+
+  </li>
+        <li class="menu-item menu-item-sitemap">
+
+    <a href="/sitemap.xml" rel="section"><i class="fa fa-fw fa-sitemap"></i>Sitemap</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="fa fa-fw fa-heartbeat"></i>Commonweal 404</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/04/24/CVPR2020-Detection-in-Crowded-Scenes-One-Proposal-Multiple-Predictions/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="zhbli">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="zhbli">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          [CVPR2020] Detection in Crowded Scenes: One Proposal, Multiple Predictions
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-04-24 13:47:17" itemprop="dateCreated datePublished" datetime="2020-04-24T13:47:17+08:00">2020-04-24</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-05-04 11:51:44" itemprop="dateModified" datetime="2020-05-04T11:51:44+08:00">2020-05-04</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="Abstract"><a href="#Abstract" class="headerlink" title="Abstract"></a>Abstract</h2><p><a target="_blank" rel="noopener" href="https://github.com/Purkialo/CrowdDet">https://github.com/Purkialo/CrowdDet</a></p>
+<p>本文提出 proposal-based object detector，用于检测密集场景下高度重叠的物体。核心是令每个 proposal 预测一组 correlated instances 而不是仅预测一个。通过这种方式，相邻的 proposals 可以推断出相同的实例集，而不是区分 individuals，这使得训练更容易。</p>
+<p>本文还提出：</p>
+<ul>
+<li>EMD loss，用于监督 instance set prediction 的学习。</li>
+<li>新的后处理方法 Set NMS，用于删除来自不同 proposals 中的重复项，旨在消除传统 NMS 的缺点。</li>
+<li>可选的优化模块 RM，用于处理潜在的 false positives。</li>
+</ul>
+<h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><p>拥挤场景检测失败主要有两个原因：</p>
+<ol>
+<li>高度重叠的物体通常具有非常相似的特征，因此很难为每个 proposal 分别生成准确的预测。</li>
+<li>相似预测很容易被 NMS 删除。</li>
+</ol>
+<h2 id="Our-Approach-Multiple-Instance-Prediction"><a href="#Our-Approach-Multiple-Instance-Prediction" class="headerlink" title="Our Approach: Multiple Instance Prediction"></a>Our Approach: Multiple Instance Prediction</h2><p>对于每个 proposal box $b_i$，不是预测一个物体，而是预测 correlated set of ground-truth instances $G(b_i)$：</p>
+<img src="https://i.loli.net/2020/04/24/sONmBzkFbxn2MGr.png" alt="image-20200424140540286" style="zoom:50%;" />
+
+<p>其中 $\mathcal{G}$ 是锁帧 ground truth boxes。</p>
+<h3 id="Instance-set-prediction"><a href="#Instance-set-prediction" class="headerlink" title="Instance set prediction"></a>Instance set prediction</h3><p>使用 $K$ 个 detection functions 来产生一组预测 $\text{P}(b_i)$：</p>
+<img src="https://i.loli.net/2020/04/24/413GMibfKuIWdSU.png" alt="image-20200424141003910" style="zoom:50%;" />
+
+<p>其中 $K$ 是常数，指 $G(b_i)$ 的 maximum cardinality。$\mathbf{c}_i$ 是 class label with confidence，$\mathbf{l}_i$ 是对应的坐标。</p>
+<h3 id="EMD-loss"><a href="#EMD-loss" class="headerlink" title="EMD loss"></a>EMD loss</h3><p>我们设计损失函数 $\mathcal{L}(b_i)$ 最小化预测 $P(b_i)$ 和 ground-truth instances $G(b_i)$。这可以归结为 set distance measurement 问题。因此我们设计 EMD loss 以最小化两个几何间的 Earth Mover‘s Distance：</p>
+<img src="https://i.loli.net/2020/04/24/UAMQDyGHm5Tz4pk.png" alt="image-20200424141412615" style="zoom:50%;" />
+
+<p>其中 $\pi$ 表示 $(1,2,…,K)$ 的一种具体排列。我们假设 $|G(b_i)|=K$，否则添加 dummy boxes（标签是背景，无回归损失）。</p>
+<p>直觉上，要探索预测与真值之间所有可能的一对一匹配以找到最佳匹配。</p>
+<h3 id="Set-NMS"><a href="#Set-NMS" class="headerlink" title="Set NMS"></a>Set NMS</h3><p>为原始 NMS 添加小补丁：每当一个框抑制另一个框之前，我们插入一个额外的测试，判断这两个框是否来自同一个 proposal。如果是，则跳过抑制。</p>
+<h3 id="Refinement-module"><a href="#Refinement-module" class="headerlink" title="Refinement module"></a>Refinement module</h3><p>我们的算法可能导致更多的 false positives，因为我们产生了更多的预测。我们的 refine module 将预测与 proposal feature 作为输入，进行再次预测。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Object-Detection/" rel="tag"># Object Detection</a>
+              <a href="/tags/CVPR2020/" rel="tag"># CVPR2020</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/04/24/AAAI2020-Discriminative-and-Robust-Online-Learning-for-Siamese-Visual-Tracking/" rel="prev" title="[AAAI2020] Discriminative and Robust Online Learning for Siamese Visual Tracking">
+      <i class="fa fa-chevron-left"></i> [AAAI2020] Discriminative and Robust Online Learning for Siamese Visual Tracking
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/04/24/CVPR2020-High-Performance-Long-Term-Tracking-with-Meta-Updater/" rel="next" title="[CVPR2020] High-Performance Long-Term Tracking with Meta-Updater">
+      [CVPR2020] High-Performance Long-Term Tracking with Meta-Updater <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Abstract"><span class="nav-number">1.</span> <span class="nav-text">Abstract</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Introduction"><span class="nav-number">2.</span> <span class="nav-text">Introduction</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Our-Approach-Multiple-Instance-Prediction"><span class="nav-number">3.</span> <span class="nav-text">Our Approach: Multiple Instance Prediction</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Instance-set-prediction"><span class="nav-number">3.1.</span> <span class="nav-text">Instance set prediction</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#EMD-loss"><span class="nav-number">3.2.</span> <span class="nav-text">EMD loss</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Set-NMS"><span class="nav-number">3.3.</span> <span class="nav-text">Set NMS</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Refinement-module"><span class="nav-number">3.4.</span> <span class="nav-text">Refinement module</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">zhbli</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">119</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">46</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zhbli</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+</body>
+</html>

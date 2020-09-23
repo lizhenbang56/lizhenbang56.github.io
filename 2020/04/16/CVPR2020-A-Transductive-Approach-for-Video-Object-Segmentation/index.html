@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="Abstract现有半监督视频分割方法的缺点：使用在其他领域（如光流和实例分割）训练的额外模块的信息进行视频目标分割，因此这些方法无法与其他方法在同一个公平的基础上进行比较。 本文的解决方案：提出了简单而强大的 transductive method，不需要额外的模块，数据集和复杂的结构设计。 本文采用标签传播方法，像素标签根据嵌入空间的特征相似性向前传递。与其他的传播方法不同，我们以整体方式传播">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[CVPR2020] A Transductive Approach for Video Object Segmentation">
+<meta property="og:url" content="http://yoursite.com/2020/04/16/CVPR2020-A-Transductive-Approach-for-Video-Object-Segmentation/index.html">
+<meta property="og:site_name" content="zhbli">
+<meta property="og:description" content="Abstract现有半监督视频分割方法的缺点：使用在其他领域（如光流和实例分割）训练的额外模块的信息进行视频目标分割，因此这些方法无法与其他方法在同一个公平的基础上进行比较。 本文的解决方案：提出了简单而强大的 transductive method，不需要额外的模块，数据集和复杂的结构设计。 本文采用标签传播方法，像素标签根据嵌入空间的特征相似性向前传递。与其他的传播方法不同，我们以整体方式传播">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://i.loli.net/2020/04/16/wPLlhgM12XmHfYK.png">
+<meta property="og:image" content="https://i.loli.net/2020/04/17/ZgQ6Spsyw8C2VhE.png">
+<meta property="og:image" content="https://i.loli.net/2020/04/16/buBA2EyGKk3hcVm.png">
+<meta property="og:image" content="https://i.loli.net/2020/04/17/PouckI592LRhBTi.png">
+<meta property="og:image" content="https://i.loli.net/2020/04/17/PLC7wFtRyUY1pm4.png">
+<meta property="og:image" content="https://i.loli.net/2020/04/17/WOdYctQXn6wRpNJ.png">
+<meta property="og:image" content="https://i.loli.net/2020/04/17/d8Etjs79BRXohYg.png">
+<meta property="og:image" content="https://i.loli.net/2020/04/17/chFNUmrfHnLJzMZ.png">
+<meta property="og:image" content="https://i.loli.net/2020/04/17/mydOXQAtrkWPo2u.png">
+<meta property="article:published_time" content="2020-04-16T08:24:17.000Z">
+<meta property="article:modified_time" content="2020-04-17T09:11:14.000Z">
+<meta property="article:author" content="zhbli">
+<meta property="article:tag" content="Video Object Segmentation">
+<meta property="article:tag" content="CVPR2020">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.loli.net/2020/04/16/wPLlhgM12XmHfYK.png">
+
+<link rel="canonical" href="http://yoursite.com/2020/04/16/CVPR2020-A-Transductive-Approach-for-Video-Object-Segmentation/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>[CVPR2020] A Transductive Approach for Video Object Segmentation | zhbli</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">zhbli</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-schedule">
+
+    <a href="/schedule/" rel="section"><i class="fa fa-fw fa-calendar"></i>Schedule</a>
+
+  </li>
+        <li class="menu-item menu-item-sitemap">
+
+    <a href="/sitemap.xml" rel="section"><i class="fa fa-fw fa-sitemap"></i>Sitemap</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="fa fa-fw fa-heartbeat"></i>Commonweal 404</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/04/16/CVPR2020-A-Transductive-Approach-for-Video-Object-Segmentation/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="zhbli">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="zhbli">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          [CVPR2020] A Transductive Approach for Video Object Segmentation
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-04-16 16:24:17" itemprop="dateCreated datePublished" datetime="2020-04-16T16:24:17+08:00">2020-04-16</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-04-17 17:11:14" itemprop="dateModified" datetime="2020-04-17T17:11:14+08:00">2020-04-17</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="Abstract"><a href="#Abstract" class="headerlink" title="Abstract"></a>Abstract</h2><p>现有半监督视频分割方法的缺点：使用在其他领域（如光流和实例分割）训练的额外模块的信息进行视频目标分割，因此这些方法无法与其他方法在同一个公平的基础上进行比较。</p>
+<p>本文的解决方案：提出了简单而强大的 transductive method，不需要额外的模块，数据集和复杂的结构设计。</p>
+<p>本文采用标签传播方法，像素标签根据嵌入空间的特征相似性向前传递。与其他的传播方法不同，我们以整体方式传播时间信息，这考虑了长时间的目标表观。</p>
+<p>性能：</p>
+<ul>
+<li>本文的方法需要很少的额外计算，速度约为 37 FPS。</li>
+<li>使用 vanilla ResNet50 的单一模型在 DAVIS2017 验证集上的 $\mathcal{J}$&amp;$\mathcal{F}$ 得分为 72.3%，测试集上的 $\mathcal{J}$&amp;$\mathcal{F}$ 得分为 63.1%。</li>
+<li>代码：<a target="_blank" rel="noopener" href="https://github.com/microsoft/transductive-vos.pytorch">https://github.com/microsoft/transductive-vos.pytorch</a></li>
+</ul>
+<h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><p>由于光流、跟踪、实例分割、ReID 等任务与视频目标分割任务具有相似点，先前的工作 [29] [30] 尝试将为这些任务训练的模块转移到视频目标分割算法中：</p>
+<ul>
+<li>光流和跟踪通过估计附近帧中的位移来捕获  local dependencies 。</li>
+<li>实例分割和 ReID 通过学习对剧烈表观变化的不变性来捕获 global dependencies 。</li>
+</ul>
+<blockquote>
+<p>[29] X. Li and C. Change Loy. Video object segmentation with joint re-identification and attention-aware mask propagation. In Proceedings of the European Conference on Computer Vision (ECCV), pages 90–105, 2018.</p>
+<p>[30] J. Luiten, P. Voigtlaender, and B. Leibe. Premvos: Proposalgeneration, refinement and merging for video object segmentation. arXiv preprint arXiv:1807.09190, 2018.</p>
+</blockquote>
+<p>捕获 local 和 global dependencies 一直是半监督学习的中心课题，这又被称作 transductive inference。其基本假设是：</p>
+<ol>
+<li>附近的样本往往具有相同的标签。</li>
+<li>位于同一流形的样本应该具有相同标签。</li>
+</ol>
+<p>Local 和 global dependencies 描述了足够平滑的亲和分布，因此能够可靠地估计无标签数据的标签传播。这启发我们探索半监督视频目标分割的统一方法，无需整合其他领域的模块：</p>
+<ul>
+<li>通过空间先验和运动先验来建模 local dependency。它基于这样的假设：空间上邻近的像素可能具有相同的标签，而时间间隔较远的帧会削弱这种空间连续性。</li>
+<li>通过在训练集上学习的视觉表观建模 global dependency。</li>
+</ul>
+<p>该推论遵循正则化框架，该框架在构造的时空依赖图中传播标签。尽管最近的在最近的视频目标算法中被使用，但他们学习和传播亲和力的方式是稀疏和局部的，即，要么在相邻帧之间，要么在第一帧与较远帧之间学习像 pixel affinities。我们观察到在 temporal volume 中存在很多平滑的无标签结构未被充分利用，这可能导致处理形变和遮挡时失败。相比之下，我们的标签传播方法尝试捕获从第一帧到当前帧之前的整个视频序列的所有帧。为了限制计算开销，我们在较近的历史中密集采样，而在较远的历史中稀疏采样，使得我们的模型考虑目标表观变化的同时减少了时间冗余。</p>
+<p>我们的模型不依赖任何其他模块、数据集，也不依赖基于在 ImageNet 上预训练的 ResNet50 的复杂架构。测试时，逐帧预测仅涉及基本网络的前馈以及与预测历史的内积。因此，推理速度很快，并且不受目标数量的影响。</p>
+<h2 id="Approach"><a href="#Approach" class="headerlink" title="Approach"></a>Approach</h2><p>与先前在单个注释帧上微调模型或从其他相关任务中转移知识的工作相反，我们的方法着重于充分利用视频序列中未标记的结构，从而构建一个简单、强大、快速的模型。我们首先描述通用半监督分类框架，再将其应用到在线视频目标分割。</p>
+<h3 id="A-Transductive-Inference-Framework"><a href="#A-Transductive-Inference-Framework" class="headerlink" title="A Transductive Inference Framework"></a>A Transductive Inference Framework</h3><p>考虑通用半监督分类问题，设有数据集 $\mathcal{D} = {(x_1,y_1), (x_2, y_2), (x_l, y_l), x_{l+1}, …, x_n}$，具有 $l$ 个已标记的数据对，和 $n-l$ 个未标记的数据点。任务是基于观测 $\mathcal{D}$ 为无标签数据 ${x_{l+1}, …, x_n}$ 推断标签 ${\hat y_i}_{i=l+1}^n$。无标签数据的推断在以前的工作中被形式化为 transductive regularization 框架：</p>
+<img src="https://i.loli.net/2020/04/16/wPLlhgM12XmHfYK.png" alt="image-20200416175436284" style="zoom:33%;" />
+
+<p>其中 $w_{ij}$ 编码了数据点 $(x_i, x_j)$ 的相似性，$d_i$ 表示像素 $i$ 的 degree：$d_i = \sum_j w_{ij}$。第一项是平滑约束，强制相似的点具有相同标签。第二项是 fitting 约束，偏离初始观测的解。参数 $\mu$ 平衡两项。半监督分类解决如下优化问题：</p>
+<img src="https://i.loli.net/2020/04/17/ZgQ6Spsyw8C2VhE.png" alt="image-20200416175527352" style="zoom:33%;" />
+
+<p>上述能量最小化问题可以被迭代求解（公式3）：</p>
+<img src="https://i.loli.net/2020/04/16/buBA2EyGKk3hcVm.png" alt="image-20200416181008060" style="zoom:43%;" />
+
+<p>其中 $\mathbf{S} = \mathbf{D}^{-1/2}\mathbf{W}\mathbf{D}^{-1/2}$ 是由 $w_{ij}$ 构建的归一化相似性矩阵。$\alpha = \mu/(\mu+1)$，$\mathbf{y}(0) = [y_1, y_2, …, y_n]^T$ 是标签的初始观测，clamped with 有监督的标签。$\alpha$ 常为 0.99。这一 transduction 模型来自于 globalized model 上，而 globalized model 建立在无监督数据的密集结构上。</p>
+<h3 id="Online-Video-Object-Segmentation"><a href="#Online-Video-Object-Segmentation" class="headerlink" title="Online Video Object Segmentation"></a>Online Video Object Segmentation</h3><p>基于上述框架，为半监督视频目标分割建立 transductive model，负责 dense long-range interaction。</p>
+<p>这带来了三个挑战：</p>
+<ol>
+<li>模型必须以在线方式工作，即不能依赖未来帧推断当前帧。</li>
+<li>视频中的像素数可达数千万，难以计算所有像素的相似性矩阵。</li>
+<li>需要学习像素间有效的相似性表示 $W$.</li>
+</ol>
+<p>为了使算法在线运行，假定当运行到 $t$ 帧时，已经确定了所有先前帧的预测。因此通过时间来扩展推断过程，从而近似公式3，得到公式4：</p>
+<img src="https://i.loli.net/2020/04/17/PouckI592LRhBTi.png" alt="image-20200417132705360" style="zoom: 41%;" />
+
+<p>$\mathbf{S}_{1:t \rightarrow t+1}$ 表示在从第一帧到第 $t$ 帧的像素，和第 $t+1$ 帧像素之间构建相似性矩阵。由于除了第一帧外没有标签，因此先验项 $\mathbf{y}(0)$ 被忽略。</p>
+<p>对于第 $t+1$ 帧，上述传播过程等价于最小化一组 spatio-temporal volume 的平滑项：</p>
+<img src="https://i.loli.net/2020/04/17/PLC7wFtRyUY1pm4.png" alt="image-20200417133432383" style="zoom:41%;" />
+
+<p>$i$ 为 $t+1$ 帧中的像素下标，$j$ 为从第一帧到第 $t$ 帧的像素下标。</p>
+<h3 id="Label-Propagation"><a href="#Label-Propagation" class="headerlink" title="Label Propagation"></a>Label Propagation</h3><p>给定第一帧标签，利用公式4将标签传播到每一帧。视频目标割的质量在很大程度上取决于相似度 $\mathbf{S}$，其核心是相似度矩阵 $\mathbf{W}$。</p>
+<h4 id="Similarity-metric"><a href="#Similarity-metric" class="headerlink" title="Similarity metric"></a>Similarity metric</h4><p>为了构建平滑的 classification function，相似性度量应考虑全局高级语义和局部低级空间连续性。我们的相似性度量 $w_{ij}$ 包含表观项和空间项：</p>
+<img src="https://i.loli.net/2020/04/17/WOdYctQXn6wRpNJ.png" alt="image-20200417134039782" style="zoom:41%;" />
+
+<p>$f_i, f_j$ 是像素 $p_i, p_j$ 的特征嵌入，由卷积网络计算。$\text{loc}(i)$ 是像素 $i$ 的空间位置。</p>
+<h4 id="Frame-sampling"><a href="#Frame-sampling" class="headerlink" title="Frame sampling"></a>Frame sampling</h4><p>由于长视频可能有数百帧，在所有先前帧计算相似度矩阵 $S$ 是不可行的。因此通过观察视频中的时间冗余对少数帧进行采样——在前 40 帧中采样 9 帧：</p>
+<ol>
+<li>采样目标帧之前的连续 4 帧，对局部运动进行建模。</li>
+<li>从其余 36 帧中稀疏采样 5 帧进行长期建模。</li>
+</ol>
+<h4 id="A-simple-motion-prior"><a href="#A-simple-motion-prior" class="headerlink" title="A simple motion prior"></a>A simple motion prior</h4><p>在时域中较远的像素具有较弱的空间依赖性。因此在参考帧在局部密集采样时，使用较小的 $\sigma = 8$，在参考帧较远时使用较大的 $\sigma = 21$。这一简单的运动模型对于发现长期依赖是有效的。</p>
+<h3 id="Learning-the-appearance-embedding"><a href="#Learning-the-appearance-embedding" class="headerlink" title="Learning the appearance embedding"></a>Learning the appearance embedding</h3><p>使用数据驱动的方式在 2D 卷积网络中学习表观嵌入。表观嵌入旨在捕获由于运动，缩放和变形而引起的短期和长期变化。训练视频中每帧都标注了目标的分割和 identity。</p>
+<p>对于每个 target pixel $x_i$，考虑先前帧的所有像素作为 references。定义像素 $x_i$ 的特征嵌入是 $f_i$，参考像素 $x_j$ 的特征嵌入是 $f_j$，那么 $x_i$ 的预测标签 $\hat{y_i}$ 为：</p>
+<img src="https://i.loli.net/2020/04/17/d8Etjs79BRXohYg.png" alt="image-20200417135918319" style="zoom:41%;" />
+
+<p>通过对目标帧中所有像素计算标准交叉熵损失来优化特征嵌入：</p>
+<img src="https://i.loli.net/2020/04/17/chFNUmrfHnLJzMZ.png" alt="image-20200417135930405" style="zoom:41%;" />
+
+<h2 id="Results"><a href="#Results" class="headerlink" title="Results"></a>Results</h2><img src="https://i.loli.net/2020/04/17/mydOXQAtrkWPo2u.png" alt="image-20200417141416449" style="zoom:41%;" />
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Video-Object-Segmentation/" rel="tag"># Video Object Segmentation</a>
+              <a href="/tags/CVPR2020/" rel="tag"># CVPR2020</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/04/16/CVPR2020-Deformable-Siamese-Attention-Networks-for-Visual-Objec-Tracking/" rel="prev" title="[CVPR2020] Deformable Siamese Attention Networks for Visual Object Tracking">
+      <i class="fa fa-chevron-left"></i> [CVPR2020] Deformable Siamese Attention Networks for Visual Object Tracking
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/04/17/arXiv2004-Fully-Convolutional-Online-Tracking/" rel="next" title="[arXiv2004] Fully Convolutional Online Tracking">
+      [arXiv2004] Fully Convolutional Online Tracking <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Abstract"><span class="nav-number">1.</span> <span class="nav-text">Abstract</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Introduction"><span class="nav-number">2.</span> <span class="nav-text">Introduction</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Approach"><span class="nav-number">3.</span> <span class="nav-text">Approach</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#A-Transductive-Inference-Framework"><span class="nav-number">3.1.</span> <span class="nav-text">A Transductive Inference Framework</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Online-Video-Object-Segmentation"><span class="nav-number">3.2.</span> <span class="nav-text">Online Video Object Segmentation</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Label-Propagation"><span class="nav-number">3.3.</span> <span class="nav-text">Label Propagation</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Similarity-metric"><span class="nav-number">3.3.1.</span> <span class="nav-text">Similarity metric</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Frame-sampling"><span class="nav-number">3.3.2.</span> <span class="nav-text">Frame sampling</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#A-simple-motion-prior"><span class="nav-number">3.3.3.</span> <span class="nav-text">A simple motion prior</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Learning-the-appearance-embedding"><span class="nav-number">3.4.</span> <span class="nav-text">Learning the appearance embedding</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Results"><span class="nav-number">4.</span> <span class="nav-text">Results</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">zhbli</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">119</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">46</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zhbli</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+</body>
+</html>

@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="Abstract现有算法的问题：虽然图像的风格迁移任务取得了成功，但是处理视频时，结果会闪烁。 本文的解决方案：第一个提出了用于在线视频风格迁移的端到端网络，可生成连贯的视频（temporally coherent）。 算法具有两个关键的思想：  合并短期一致性 将短期一致性传播为长期一致性  MethodMotivation直觉是将风格化的结果从前一帧 warp 到当前帧，并自适应地将两者融合到">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[ICCV2017] Coherent Online Video Style Transfer">
+<meta property="og:url" content="http://yoursite.com/2020/07/19/ICCV2017-Coherent-Online-Video-Style-Transfer/index.html">
+<meta property="og:site_name" content="zhbli">
+<meta property="og:description" content="Abstract现有算法的问题：虽然图像的风格迁移任务取得了成功，但是处理视频时，结果会闪烁。 本文的解决方案：第一个提出了用于在线视频风格迁移的端到端网络，可生成连贯的视频（temporally coherent）。 算法具有两个关键的思想：  合并短期一致性 将短期一致性传播为长期一致性  MethodMotivation直觉是将风格化的结果从前一帧 warp 到当前帧，并自适应地将两者融合到">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://i.loli.net/2020/07/19/7bLORjPkiBnwVHQ.png">
+<meta property="og:image" content="https://i.loli.net/2020/07/19/WTtw2NpjSZVHfJ7.png">
+<meta property="og:image" content="https://i.loli.net/2020/07/19/KJXQN7mnIfSCuyR.png">
+<meta property="og:image" content="https://i.loli.net/2020/07/19/7SGAfxJQoVzvwXl.png">
+<meta property="og:image" content="https://i.loli.net/2020/07/19/pPZuXkHlM8AGgQi.png">
+<meta property="og:image" content="https://i.loli.net/2020/07/19/mfoTYJXZkrcpbC6.png">
+<meta property="og:image" content="https://i.loli.net/2020/07/19/gVlYxQOtH6uJX3T.png">
+<meta property="og:image" content="https://i.loli.net/2020/07/19/7dNgFB2lLRWyEDu.png">
+<meta property="article:published_time" content="2020-07-19T03:12:59.000Z">
+<meta property="article:modified_time" content="2020-07-19T07:44:32.000Z">
+<meta property="article:author" content="zhbli">
+<meta property="article:tag" content="Inter-Frame Consistency">
+<meta property="article:tag" content="ICCV2017">
+<meta property="article:tag" content="Style Transfer">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.loli.net/2020/07/19/7bLORjPkiBnwVHQ.png">
+
+<link rel="canonical" href="http://yoursite.com/2020/07/19/ICCV2017-Coherent-Online-Video-Style-Transfer/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>[ICCV2017] Coherent Online Video Style Transfer | zhbli</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">zhbli</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-schedule">
+
+    <a href="/schedule/" rel="section"><i class="fa fa-fw fa-calendar"></i>Schedule</a>
+
+  </li>
+        <li class="menu-item menu-item-sitemap">
+
+    <a href="/sitemap.xml" rel="section"><i class="fa fa-fw fa-sitemap"></i>Sitemap</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="fa fa-fw fa-heartbeat"></i>Commonweal 404</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/07/19/ICCV2017-Coherent-Online-Video-Style-Transfer/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="zhbli">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="zhbli">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          [ICCV2017] Coherent Online Video Style Transfer
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2020-07-19 11:12:59 / Modified: 15:44:32" itemprop="dateCreated datePublished" datetime="2020-07-19T11:12:59+08:00">2020-07-19</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="Abstract"><a href="#Abstract" class="headerlink" title="Abstract"></a>Abstract</h2><p>现有算法的问题：虽然图像的风格迁移任务取得了成功，但是处理视频时，结果会闪烁。</p>
+<p>本文的解决方案：第一个提出了用于在线视频风格迁移的<strong>端到端</strong>网络，可生成连贯的视频（<code>temporally coherent</code>）。</p>
+<p>算法具有两个关键的思想：</p>
+<ol>
+<li>合并短期一致性</li>
+<li>将短期一致性传播为长期一致性</li>
+</ol>
+<h2 id="Method"><a href="#Method" class="headerlink" title="Method"></a>Method</h2><h3 id="Motivation"><a href="#Motivation" class="headerlink" title="Motivation"></a>Motivation</h3><p>直觉是将风格化的结果从前一帧 warp 到当前帧，并自适应地将两者融合到一起。换句话说，前一帧的某些可追踪（traceable）的点/区域保持不变，而某些不可追踪的点/区域使用当前帧的新结果。这一策略具有两种作用：</p>
+<ol>
+<li>确保运动路径上的风格化结果尽可能稳定。</li>
+<li>避免了因遮挡或运动不连续而产生的伪影。</li>
+</ol>
+<p>上述策略仅保留了短期一致性。我们需要将短期一致性进行传播，以获得长期一致性。在 $t-1$ 时刻，获得了组合特征图 $F^o_{t-1}$，该特征图受两帧一致性（ two-frame consistency）约束。在时刻 $t$，我们重新利用 $F^o_{t-1}$。这样，我们的网络每次只需要考虑两帧，但是仍然可以达到长期一致性。</p>
+<h3 id="Network-Architecture"><a href="#Network-Architecture" class="headerlink" title="Network Architecture"></a>Network Architecture</h3><p>给定输入视频 ${I_t|t=1…n}$，任务是获得风格化的视频 ${O_t|t=1…n}$。对于第一帧 $I_1$，使用现有的风格化网络 $Net_0$ 产生风格化结果。同时生成 encoded features $F_1$，在处理第二帧时，$F_1$ 是我们提出的网络 $Net_1$ 的输入。从第二帧开始，使用 $Net_1$ 而不是 $Net_0$ 进行风格化迁移。</p>
+<p>本文提出的 $Net_1$ 可保持相邻两帧的一致性，包含三个组件：</p>
+<ol>
+<li>Style Sub-network</li>
+<li>Flow Sub-network</li>
+<li>Mask Sub-network</li>
+</ol>
+<img src="https://i.loli.net/2020/07/19/7bLORjPkiBnwVHQ.png" alt="image-20200719144729983" style="zoom:50%;" />
+
+<h4 id="Style-Sub-network"><a href="#Style-Sub-network" class="headerlink" title="Style Sub-network"></a>Style Sub-network</h4><p>使用 [23] 作为默认的风格子网。</p>
+<blockquote>
+<p>[23] J. Johnson, A. Alahi, and L. Fei-Fei. <strong>Perceptual losses for real-time style transfer and super-resolution</strong>. arXiv preprint arXiv:1603.08155, 2016.</p>
+</blockquote>
+<h4 id="Flow-Sub-network"><a href="#Flow-Sub-network" class="headerlink" title="Flow Sub-network"></a>Flow Sub-network</h4><p>使用 flownet [15] 作为默认的 flow 子网。</p>
+<blockquote>
+<p>[15] P. Fischer, A. Dosovitskiy, E. Ilg, P. Hausser, C. Hazırbas¸, ¨ V. Golkov, P. van der Smagt, D. Cremers, and T. Brox. <strong>Flownet: Learning optical flow with convolutional networks</strong>. arXiv preprint arXiv:1504.06852, 2015.</p>
+</blockquote>
+<p>两个相邻帧 $I_{t-1}, I_t$ 首先编码为特征 $F_{t-1}, F_t$。$W_t$ 是由 flow 子网生成的 feature flow，并缩放到 $F_{t-1}$ 的尺寸。由于 $W_t$ 的值通常是小数，我们通过双线性插值将 $F_{t-1}$ warp 到 $F_t’$：</p>
+<img src="https://i.loli.net/2020/07/19/WTtw2NpjSZVHfJ7.png" alt="image-20200719150021593" style="zoom: 50%;" />
+
+<p>其中 $\mathcal W_{t-1}^t(\cdot)$ 是利用 $W_t$ 将特征从 $t-1$ warp 到 $t$ 的函数，即：</p>
+<img src="https://i.loli.net/2020/07/19/KJXQN7mnIfSCuyR.png" alt="image-20200719150349757" style="zoom:50%;" />
+
+<h4 id="Mask-Sub-network"><a href="#Mask-Sub-network" class="headerlink" title="Mask Sub-network"></a>Mask Sub-network</h4><p>给定 warped feature $F’_t$ 和 original feature $F_t$，mask 子网用于回归 composition mask $M$，$M$ 用于组合 $F’_t$ 和 $F_t$。$M$ 的值介于 0 到 1 之间。对于可跟踪的点/区域，mask 的值为 1，表示应该利用 $F’_t$ 以保持连贯性。否则 mask 的值为 0，以利用 $F_t$。</p>
+<p>Mask 子网由三个卷积层构成，步长为 1。输入是两个特征图的绝对插值：</p>
+<img src="https://i.loli.net/2020/07/19/7SGAfxJQoVzvwXl.png" alt="image-20200719150957201" style="zoom:50%;" />
+
+<p>说明：差异大，表示属于不可跟踪点，尽量利用当前帧特征。差异小，表示属于可跟踪点，尽量利用上一帧特征。</p>
+<p>输出是单通道 mask $M$。通过线性插值获得 composite features $F^o_t$：</p>
+<img src="https://i.loli.net/2020/07/19/pPZuXkHlM8AGgQi.png" alt="image-20200719151147462" style="zoom:50%;" />
+
+<h4 id="Summary-of-Net-1"><a href="#Summary-of-Net-1" class="headerlink" title="Summary of $Net_1$"></a>Summary of $Net_1$</h4><p>给定两个输入帧 $I_{t-1}$ 和 $I_t$，送入<strong>参数固定</strong>的风格子网的<strong>编码器</strong>中，得到特征图 $F_{t-1}, F_t$。</p>
+<p>在另一个分支中，$I_{t−1}, I_t$ 送入 flow 子网生成 feature flow $W_t$，把特征 $F_{t-1}$ warp 成 $F’_t$。</p>
+<p>接下来计算 $\Delta F$ 并送入 mask 子网得到 $M$，利用 $M$ 得到 $F^o_t$。</p>
+<p>最后，将 $F^o_t$ 送入风格子网的<strong>解码器</strong>中，得到第 $t$ 帧的风格化结果。</p>
+<h3 id="The-Loss-Function"><a href="#The-Loss-Function" class="headerlink" title="The Loss Function"></a>The Loss Function</h3><p>为了训练 flow 和 mask 子网，损失包含 3 项：</p>
+<ol>
+<li>coherence term</li>
+<li>occlusion term</li>
+<li>flow term</li>
+</ol>
+<p>Coherence term 惩罚两个连续帧的风格化结果的不一致性：</p>
+<img src="https://i.loli.net/2020/07/19/mfoTYJXZkrcpbC6.png" alt="image-20200719152823661" style="zoom:50%;" />
+
+<p>$S_{t-1}$ 是 $t-1$ 帧独立计算的风格化结果。</p>
+<p>Warping function $W^t_{t−1}(\cdot)$ 使用 ground-truth flow。</p>
+<p>$M_g$ 是 ground-truth mask。</p>
+<p>该损失鼓励 $O_t$ 和 $S_t$ 在可跟踪点/区域上的风格化结果保持一致。</p>
+<p>相反，对于不可跟踪区域，occlusion loss 迫使 $O_t$ 和 $S_t$ 保持一致：</p>
+<img src="https://i.loli.net/2020/07/19/gVlYxQOtH6uJX3T.png" alt="image-20200719153650486" style="zoom:50%;" />
+
+<p>另外，还要约束 feature flow：</p>
+<img src="https://i.loli.net/2020/07/19/7dNgFB2lLRWyEDu.png" alt="image-20200719153856140" style="zoom:50%;" />
+
+<p>其中 $W^g_t \downarrow$ 表示将 ground-truth optical flow 下采样到与 $W_t$ 尺寸相同。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Inter-Frame-Consistency/" rel="tag"># Inter-Frame Consistency</a>
+              <a href="/tags/ICCV2017/" rel="tag"># ICCV2017</a>
+              <a href="/tags/Style-Transfer/" rel="tag"># Style Transfer</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/07/19/ECCV2020-Kernelized-Memory-Network-for-Video-Object-Segmentation/" rel="prev" title="[ECCV2020] Kernelized Memory Network for Video Object Segmentation">
+      <i class="fa fa-chevron-left"></i> [ECCV2020] Kernelized Memory Network for Video Object Segmentation
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/07/19/ECCV2018-Learning-Blind-Video-Temporal-Consistency/" rel="next" title="[ECCV2018] Learning Blind Video Temporal Consistency">
+      [ECCV2018] Learning Blind Video Temporal Consistency <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Abstract"><span class="nav-number">1.</span> <span class="nav-text">Abstract</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Method"><span class="nav-number">2.</span> <span class="nav-text">Method</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Motivation"><span class="nav-number">2.1.</span> <span class="nav-text">Motivation</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Network-Architecture"><span class="nav-number">2.2.</span> <span class="nav-text">Network Architecture</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Style-Sub-network"><span class="nav-number">2.2.1.</span> <span class="nav-text">Style Sub-network</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Flow-Sub-network"><span class="nav-number">2.2.2.</span> <span class="nav-text">Flow Sub-network</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Mask-Sub-network"><span class="nav-number">2.2.3.</span> <span class="nav-text">Mask Sub-network</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Summary-of-Net-1"><span class="nav-number">2.2.4.</span> <span class="nav-text">Summary of $Net_1$</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#The-Loss-Function"><span class="nav-number">2.3.</span> <span class="nav-text">The Loss Function</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">zhbli</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">119</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">46</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zhbli</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+</body>
+</html>

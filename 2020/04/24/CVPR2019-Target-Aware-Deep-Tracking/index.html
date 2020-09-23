@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="Abstract现有跟踪算法的问题：很多跟踪算法使用在通用目标识别任务上预训练的模型，但预训练模型对跟踪任务的贡献不如对其他目标识别任务大。 原因：目标跟踪中的物体可能是任意类别。因此，预训练模型很难将目标与背景区分开。 本文的解决方案：学习 target-aware features，相比于预训练特征，可以更好地识别目标。为此，设计 regression loss 和 ranking loss，">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[CVPR2019] Target-Aware Deep Tracking">
+<meta property="og:url" content="http://yoursite.com/2020/04/24/CVPR2019-Target-Aware-Deep-Tracking/index.html">
+<meta property="og:site_name" content="zhbli">
+<meta property="og:description" content="Abstract现有跟踪算法的问题：很多跟踪算法使用在通用目标识别任务上预训练的模型，但预训练模型对跟踪任务的贡献不如对其他目标识别任务大。 原因：目标跟踪中的物体可能是任意类别。因此，预训练模型很难将目标与背景区分开。 本文的解决方案：学习 target-aware features，相比于预训练特征，可以更好地识别目标。为此，设计 regression loss 和 ranking loss，">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://i.loli.net/2020/04/24/rLuQx19GUcgDTas.png">
+<meta property="og:image" content="https://i.loli.net/2020/04/24/LNPET1DhOlfpS9W.png">
+<meta property="og:image" content="https://i.loli.net/2020/04/24/FTfJ5xceyjULkPV.png">
+<meta property="og:image" content="https://i.loli.net/2020/04/24/hgXBDW8LCvrFmqf.png">
+<meta property="og:image" content="https://i.loli.net/2020/04/24/n5X4GI9cs3OUJ6t.png">
+<meta property="og:image" content="https://i.loli.net/2020/04/24/QI8a4lqNt1ijvnP.png">
+<meta property="og:image" content="https://i.loli.net/2020/04/24/We8yw3VgiETcJn2.png">
+<meta property="og:image" content="https://i.loli.net/2020/04/24/S2xQhvVzaYIibWk.png">
+<meta property="og:image" content="https://i.loli.net/2020/04/24/rwXMPSqLpWRAoaE.png">
+<meta property="article:published_time" content="2020-04-24T02:19:51.000Z">
+<meta property="article:modified_time" content="2020-05-13T12:47:02.000Z">
+<meta property="article:author" content="zhbli">
+<meta property="article:tag" content="Tracking">
+<meta property="article:tag" content="CVPR2019">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.loli.net/2020/04/24/rLuQx19GUcgDTas.png">
+
+<link rel="canonical" href="http://yoursite.com/2020/04/24/CVPR2019-Target-Aware-Deep-Tracking/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>[CVPR2019] Target-Aware Deep Tracking | zhbli</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">zhbli</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-schedule">
+
+    <a href="/schedule/" rel="section"><i class="fa fa-fw fa-calendar"></i>Schedule</a>
+
+  </li>
+        <li class="menu-item menu-item-sitemap">
+
+    <a href="/sitemap.xml" rel="section"><i class="fa fa-fw fa-sitemap"></i>Sitemap</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="fa fa-fw fa-heartbeat"></i>Commonweal 404</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/04/24/CVPR2019-Target-Aware-Deep-Tracking/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="zhbli">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="zhbli">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          [CVPR2019] Target-Aware Deep Tracking
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-04-24 10:19:51" itemprop="dateCreated datePublished" datetime="2020-04-24T10:19:51+08:00">2020-04-24</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-05-13 20:47:02" itemprop="dateModified" datetime="2020-05-13T20:47:02+08:00">2020-05-13</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Tracking/" itemprop="url" rel="index"><span itemprop="name">Tracking</span></a>
+                </span>
+                  , 
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Tracking/Feature-Extraction/" itemprop="url" rel="index"><span itemprop="name">Feature Extraction</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="Abstract"><a href="#Abstract" class="headerlink" title="Abstract"></a>Abstract</h2><p>现有跟踪算法的问题：很多跟踪算法使用在通用目标识别任务上预训练的模型，但预训练模型对跟踪任务的贡献不如对其他目标识别任务大。</p>
+<p>原因：目标跟踪中的物体可能是任意类别。因此，预训练模型很难将目标与背景区分开。</p>
+<p>本文的解决方案：学习 target-aware features，相比于预训练特征，可以更好地识别目标。为此，设计 regression loss 和 ranking loss，用于生成 target-active features 和 scale-sensitive features。我们根据反传梯度确定每个卷积滤波器的重要性，并基于用于表示目标的 activations 来选择 target aware features。Target-aware features 与孪生网络（siamfc）整合以进行目标跟踪。</p>
+<p>性能：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://xinli-zn.github.io/TADT-project-page/">https://xinli-zn.github.io/TADT-project-page/</a></li>
+<li>33.7 FPS</li>
+</ul>
+<h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><p>使用预训练模型表示目标特征时，存在很多问题：</p>
+<ol>
+<li>目标可能是任意形式的。比如，目标可能是训练集中未见过的物体。或者，可能仅仅是物体的一部分。</li>
+<li>来自最后一个卷积的特征往往仅具有高层视觉信息，缺乏精确定位和尺度估计信息。</li>
+<li>分类网络致力于缩小类内差距，用于跟踪时，无法区分同类物体。</li>
+<li>计算量大。</li>
+</ol>
+<p>一个分类网络中，反向传播的梯度可以反应特定类别的显著性。</p>
+<blockquote>
+<p>[33] Ramprasaath R Selvaraju, Michael Cogswell, Abhishek Das, Ramakrishna Vedantam, Devi Parikh, and Dhruv Batra. <strong>Grad-cam: Visual explanations from deep networks via gradient-based localization</strong>. In IEEE Conference on Computer Vision and Pattern Recognition, 2017.</p>
+</blockquote>
+<p>使用 global average pooling，卷积滤波器的梯度能够决定用于表示该滤波器表示一个目标的重要性。为了选择最有效的滤波器，我们设计了两种损失：</p>
+<ol>
+<li>使用 hinge loss 将预训练特征回归到由高斯函数生成的 soft labels，并使用梯度选择 target-active 卷积滤波器。</li>
+<li>使用 ranking loss with pair-wise distance 寻找 scale-aware 卷积滤波器。</li>
+</ol>
+<p>所选的重要滤波器的 activations 便是本文的 target-aware features。由于仅使用部分滤波器，计算量也减少了。</p>
+<h2 id="Target-Aware-Features"><a href="#Target-Aware-Features" class="headerlink" title="Target-Aware Features"></a>Target-Aware Features</h2><img src="https://i.loli.net/2020/04/24/rLuQx19GUcgDTas.png" alt="image-20200424102819639" style="zoom:50%;" />
+
+<p>我们首先分析来自预训练分类模型的特征与用于跟踪的有效表示之间的差距。然后提出 target-aware feature model。</p>
+<h3 id="Features-of-pre-trained-CNNs"><a href="#Features-of-pre-trained-CNNs" class="headerlink" title="Features of pre-trained CNNs"></a>Features of pre-trained CNNs</h3><p>给定输出特征空间为 $\mathcal{X}$ 预训练特征提取器，可以跟踪通道重要性 $\Delta$ 生成子空间 $\mathcal{X}’$：</p>
+<img src="https://i.loli.net/2020/04/24/LNPET1DhOlfpS9W.png" alt="image-20200424103046271" style="zoom:50%;" />
+
+<p>其中 $\varphi$ 是用于选择重要通道的 mapping function。通道 $i$ 的重要性 $\Delta_i$ 计算为：</p>
+<img src="https://i.loli.net/2020/04/24/FTfJ5xceyjULkPV.png" alt="image-20200424103125966" style="zoom:50%;" />
+
+<p>其中 $G_{AP}(\cdot)$ 指 global average pooling 函数，$L$ 是设计的损失，$z_i$ 是第 $i$ 个滤波器的输出特征。</p>
+<h3 id="Target-Active-Features-via-Regression"><a href="#Target-Active-Features-via-Regression" class="headerlink" title="Target-Active Features via Regression"></a>Target-Active Features via Regression</h3><p>将与目标中心对齐的图像块中的所有样本 $X_{i,j}$ 回归到高斯 label map $Y(i,j) = e^{-\frac{i^2+j^2}{2\sigma ^2}}$：</p>
+<img src="https://i.loli.net/2020/04/24/hgXBDW8LCvrFmqf.png" alt="image-20200424103220532" style="zoom:50%;" />
+
+<p>其中 $W$ 是 regressor weight。可以通过每个滤波器对拟合 label map 的贡献，计算其重要性：</p>
+<img src="https://i.loli.net/2020/04/24/n5X4GI9cs3OUJ6t.png" alt="image-20200424103239827" style="zoom:50%;" />
+
+<p>其中 $X_o$ 是 output prediction。</p>
+<h3 id="Scale-Sensitive-Features-via-Ranking"><a href="#Scale-Sensitive-Features-via-Ranking" class="headerlink" title="Scale-Sensitive Features via Ranking"></a>Scale-Sensitive Features via Ranking</h3><p>我们需要寻找对尺度变化最敏感的滤波器。我们将该问题建模为 ranking model：对训练样本按照尺寸接近目标的程度进行排序。我们利用了 [23] 中的 smooth approximated ranking loss 实现这一点：</p>
+<blockquote>
+<p>[23] Yuncheng Li, Yale Song, and Jiebo Luo. Improving pairwise ranking for multi-label image classification. In IEEE Conference on Computer Vision and Pattern Recognition, 2017.</p>
+</blockquote>
+<img src="https://i.loli.net/2020/04/24/QI8a4lqNt1ijvnP.png" alt="image-20200424103420326" style="zoom:50%;" />
+
+<p>其中 $(x_i, x_j)$ 是成对训练样本，$x_j$ 相比于 $x_i$，于目标尺寸的差距更小。$f(x,w)$ 是预测模型。</p>
+<p>梯度计算为：</p>
+<img src="https://i.loli.net/2020/04/24/We8yw3VgiETcJn2.png" alt="image-20200424103636096" style="zoom:50%;" />
+
+<img src="https://i.loli.net/2020/04/24/S2xQhvVzaYIibWk.png" alt="image-20200424103655075" style="zoom:50%;" />
+
+<p>其中 $W$ 是卷积层中的滤波器权重。</p>
+<h2 id="Tracking-Process"><a href="#Tracking-Process" class="headerlink" title="Tracking Process"></a>Tracking Process</h2><p>提出的跟踪框架由如下部分组成：</p>
+<ol>
+<li>pre-trained feature extractor：使用分类任务离线训练。</li>
+<li>target-aware feature module：仅使用第一帧训练。</li>
+<li>Siamese matching module</li>
+</ol>
+<p>测试时，使用 target-aware features 计算相似性得分：</p>
+<img src="https://i.loli.net/2020/04/24/rwXMPSqLpWRAoaE.png" alt="image-20200424103908919" style="zoom:50%;" />
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Tracking/" rel="tag"># Tracking</a>
+              <a href="/tags/CVPR2019/" rel="tag"># CVPR2019</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/04/22/CVPR2018-Learning-to-Compare-Relation-Network-for-Few-Shot-Learning/" rel="prev" title="[CVPR2018] Learning to Compare: Relation Network for Few-Shot Learning">
+      <i class="fa fa-chevron-left"></i> [CVPR2018] Learning to Compare: Relation Network for Few-Shot Learning
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/04/24/AAAI2020-SiamFC-Towards-Robust-and-Accurate-Visual-Tracking-with-Target-Estimation-Guidelines/" rel="next" title="[AAAI2020] SiamFC++: Towards Robust and Accurate Visual Tracking with Target Estimation Guidelines">
+      [AAAI2020] SiamFC++: Towards Robust and Accurate Visual Tracking with Target Estimation Guidelines <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Abstract"><span class="nav-number">1.</span> <span class="nav-text">Abstract</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Introduction"><span class="nav-number">2.</span> <span class="nav-text">Introduction</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Target-Aware-Features"><span class="nav-number">3.</span> <span class="nav-text">Target-Aware Features</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Features-of-pre-trained-CNNs"><span class="nav-number">3.1.</span> <span class="nav-text">Features of pre-trained CNNs</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Target-Active-Features-via-Regression"><span class="nav-number">3.2.</span> <span class="nav-text">Target-Active Features via Regression</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Scale-Sensitive-Features-via-Ranking"><span class="nav-number">3.3.</span> <span class="nav-text">Scale-Sensitive Features via Ranking</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Tracking-Process"><span class="nav-number">4.</span> <span class="nav-text">Tracking Process</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">zhbli</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">119</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">46</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zhbli</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+</body>
+</html>

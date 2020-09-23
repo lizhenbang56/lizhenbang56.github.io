@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="Abstract现有跟踪算法的问题：需要进行 continuous re-training，而这涉及解决复杂的优化任务以适应目标新的表观。 本文的解决方案：提出基于孪生跟踪器和 meta-learner network 提出了可实时运行的 online 跟踪框架。 meta-learner network 的作用：向孪生网络添加 target-aware feature space，从而提供新的表">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[ICCV2019] Deep Meta Learning for Real-Time Target-Aware Visual Tracking">
+<meta property="og:url" content="http://yoursite.com/2020/04/27/ICCV2019-Deep-Meta-Learning-for-Real-Time-Target-Aware-Visual-Tracking/index.html">
+<meta property="og:site_name" content="zhbli">
+<meta property="og:description" content="Abstract现有跟踪算法的问题：需要进行 continuous re-training，而这涉及解决复杂的优化任务以适应目标新的表观。 本文的解决方案：提出基于孪生跟踪器和 meta-learner network 提出了可实时运行的 online 跟踪框架。 meta-learner network 的作用：向孪生网络添加 target-aware feature space，从而提供新的表">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://i.loli.net/2020/05/01/2ok7x3jMWDBQTtz.png">
+<meta property="og:image" content="https://i.loli.net/2020/05/01/RqgTKCUJj6hoHr5.png">
+<meta property="og:image" content="https://i.loli.net/2020/05/01/Jwm78tETpgQkUvZ.png">
+<meta property="og:image" content="https://i.loli.net/2020/05/01/mYKDaJAqRMPeUH6.png">
+<meta property="og:image" content="https://i.loli.net/2020/05/01/oJleQ7hOIMVuxzW.png">
+<meta property="og:image" content="https://i.loli.net/2020/05/01/6zGYWPbMlcUtaNv.png">
+<meta property="article:published_time" content="2020-04-27T06:52:29.000Z">
+<meta property="article:modified_time" content="2020-05-13T10:19:10.000Z">
+<meta property="article:author" content="zhbli">
+<meta property="article:tag" content="Tracking">
+<meta property="article:tag" content="ICCV2019">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.loli.net/2020/05/01/2ok7x3jMWDBQTtz.png">
+
+<link rel="canonical" href="http://yoursite.com/2020/04/27/ICCV2019-Deep-Meta-Learning-for-Real-Time-Target-Aware-Visual-Tracking/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>[ICCV2019] Deep Meta Learning for Real-Time Target-Aware Visual Tracking | zhbli</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">zhbli</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-schedule">
+
+    <a href="/schedule/" rel="section"><i class="fa fa-fw fa-calendar"></i>Schedule</a>
+
+  </li>
+        <li class="menu-item menu-item-sitemap">
+
+    <a href="/sitemap.xml" rel="section"><i class="fa fa-fw fa-sitemap"></i>Sitemap</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="fa fa-fw fa-heartbeat"></i>Commonweal 404</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/04/27/ICCV2019-Deep-Meta-Learning-for-Real-Time-Target-Aware-Visual-Tracking/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="zhbli">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="zhbli">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          [ICCV2019] Deep Meta Learning for Real-Time Target-Aware Visual Tracking
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-04-27 14:52:29" itemprop="dateCreated datePublished" datetime="2020-04-27T14:52:29+08:00">2020-04-27</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-05-13 18:19:10" itemprop="dateModified" datetime="2020-05-13T18:19:10+08:00">2020-05-13</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Tracking/" itemprop="url" rel="index"><span itemprop="name">Tracking</span></a>
+                </span>
+                  , 
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Tracking/Meta-Learning/" itemprop="url" rel="index"><span itemprop="name">Meta-Learning</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="Abstract"><a href="#Abstract" class="headerlink" title="Abstract"></a>Abstract</h2><p>现有跟踪算法的问题：需要进行 continuous re-training，而这涉及解决复杂的优化任务以适应目标新的表观。</p>
+<p>本文的解决方案：提出基于孪生跟踪器和 meta-learner network 提出了可实时运行的 online 跟踪框架。</p>
+<p>meta-learner network 的作用：向孪生网络添加 target-aware feature space，从而提供新的表观信息。</p>
+<p>在 5 个数据集上验证了算法有效性，速度为 48 FPS。</p>
+<h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><p>大多数跟踪算法使用深度卷积特征作为特征提取器，并添加用于 <code>on-line adaptation</code> 的分类器或卷积滤波器。</p>
+<p>这些算法的缺点：这些算法整合得不够好，两个不同的系统（特征提取器和分类器）分别构建和训练。这就导致分类器需要不断更新以适应目标表观变化，而训练样本有限。这种更新操作需要使用 SGD、Lagrange multipliers、ridge regression 等方法求解复杂的优化问题。这使得跟踪器的运行速度通常在 20 FPS 以下。另外，由于训练样本少，容易导致过拟合。为了解决过拟合问题，大多数算法将手动设计的正则项与  training hyper-parameter tuning scheme 结合在一起，以获得更好的结果。</p>
+<p>本文将用于 target search 的 Siamese <code>matching network</code> 和用于 adaptive feature space update 的 meta-learner network 整合到一起，以解决上述问题。对于 meta-learner network，本文提出 parameter prediction network，该网络的设计灵感来自用于解决 few-shot learning 问题的 meta learning 方法。</p>
+<p>本文提出的 meta-learner network 为 <code>matching network</code> <strong>提供额外的 convolutional kernels 和 channel attention information</strong>，这样可以自适应的修改 matching network 的特征空间，从而可以在跟踪过程中获得新的表观模板，同时避免过拟合。</p>
+<p>给定新的表观训练样本，meta-learner tracker 仅能看到 matching network 最后一层的梯度。</p>
+<p>本文还为 meta-learner network 设计了新的训练方式，阻止 meta-learner network 生成导致 matching network 过拟合的新参数，以维持特征空间的泛化能力。</p>
+<p>利用 meta-learner network，通过一次前向传播就能构建 target-specific feature space，无需任何迭代优化，同时避免了过拟合，从而提高了跟踪性能。</p>
+<h2 id="Tracking-with-Meta-Learner"><a href="#Tracking-with-Meta-Learner" class="headerlink" title="Tracking with Meta-Learner"></a>Tracking with Meta-Learner</h2><h3 id="Overview-of-Proposed-Method"><a href="#Overview-of-Proposed-Method" class="headerlink" title="Overview of Proposed Method"></a>Overview of Proposed Method</h3><h4 id="Components"><a href="#Components" class="headerlink" title="Components"></a>Components</h4><p>定义 $x$ 为表示目标的图像块，$z$ 为包括目标的、具有更大背景区域的图像块。</p>
+<p>给定表示目标的图像块 $x$ 和在先前帧获得的 context patches $\mathbf{z}_\delta = {z_1,…,z_M}$，meta-learner network 为 matching network 提供 target-specific weights。为了使权重适应 target patch，本文使用 matching network 的损失函数在最后一层的负梯度 $\delta$（公式2）：</p>
+<img src="https://i.loli.net/2020/05/01/2ok7x3jMWDBQTtz.png" alt="image-20200501151253293" style="zoom:50%;" />
+
+<p>其中，$\tilde y_i$ 是 generated binary response map，假设目标位于 $z_i$ 中的正确位置。</p>
+<p>Meta-learner network 基于如下事实设计：对于不同的目标，$\delta$ 的特性也不同。因此，将 $\delta$ 作为输入，meta-learner network $g_\theta(\cdot)$ 可以根据输入生成 target-specific weights $w^{target}$（公式3）：</p>
+<img src="https://i.loli.net/2020/05/01/RqgTKCUJj6hoHr5.png" alt="image-20200501152811567" style="zoom:50%;" />
+
+<p>新的权重用于更新 matching network 的原始权重（公式4）：</p>
+<img src="https://i.loli.net/2020/05/01/Jwm78tETpgQkUvZ.png" alt="image-20200501152928542" style="zoom:50%;" />
+
+<p>其中 $\mathbf w^{adapt} = {w_1,w_2,…,[w_N,w^{target}]}$，将 $w_N$ 和 $w^{target}$ 串接到一起。Meta-learner network 也会为特征图的每个通道生成 channel-wise sigmoid attention weight，用于调整  feature representation space。</p>
+<h3 id="Tracking-algorithm"><a href="#Tracking-algorithm" class="headerlink" title="Tracking algorithm"></a>Tracking algorithm</h3><p>给定上一帧的 target patch $x$，可以在当前帧裁剪出 context image $z$。将这两幅图同时送入 matching network，可以获得  estimated response map $\hat y = f_{\mathbf w^{adapt}} (x, z)$。</p>
+<p>在跟踪过程中，维护一个 context images 的内存 $\mathbf z_{mem} = {z_1,…,z_K}$，同时维护对应的 estimated response maps 的内存 $\hat {\mathbf y}_{mem}={\hat y_1,…,\hat y_K}$。仅当 response map 中最大值超过阈值 $\tau$ 时，才将对应的 context image 放入内存。</p>
+<p>为了更新目标的表观，基于 $\hat {\mathbf y}_{mem}$ 上的 minimum entropy criterion，在内存中选择 $M$ 个样本。该准则避免了有歧义的 response maps：</p>
+<img src="https://i.loli.net/2020/05/01/mYKDaJAqRMPeUH6.png" alt="image-20200501160306752" style="zoom:50%;" />
+
+<p>使用 $M$ 个 appearance samples $\mathbf z_\delta$，根据公式 2 和公式 3 获得 target-adaptive weights $w^{target}$。然后利用公式 4 更新 matching network。</p>
+<h3 id="Network-Implementation-and-Training"><a href="#Network-Implementation-and-Training" class="headerlink" title="Network Implementation and Training"></a>Network Implementation and Training</h3><h3 id="Matching-Network"><a href="#Matching-Network" class="headerlink" title="Matching Network"></a>Matching Network</h3><p>网络共 5 层，每层的 kernel size、input dimension、output dimension 分别为：</p>
+<ol>
+<li>$11\times 11 \times 3 \times 128$</li>
+<li>$5\times 5 \times 128 \times 256$</li>
+<li>$3\times 3 \times 256 \times 384$</li>
+<li>$3\times 3 \times 384 \times 256$</li>
+<li>$1\times 1 \times 256 \times 192$</li>
+</ol>
+<h4 id="Meta-Learner-Network"><a href="#Meta-Learner-Network" class="headerlink" title="Meta-Learner Network"></a>Meta-Learner Network</h4><p>Meta-learner network 由三个全连接层组成，其中两个中间层具有 512 个单元。输入和输出分别为：</p>
+<ul>
+<li><p>输入：gradient $\delta$，尺寸为 $1\times 1\times 256\times 192$。</p>
+</li>
+<li><p>输出：$w^{target}$，尺寸为 $1\times1\times 256\times 32$。</p>
+<p>将 $w_5$ 和 $w^{target}$ 串接起来，得到新的 kernel，尺寸为 $1\times 1\times 256 \times (192+32)$。</p>
+</li>
+</ul>
+<p>为了训练 meta-learner network，使用 ILSVRC 视频数据库验证集的 1314 段视频。训练过程如下：</p>
+<ol>
+<li>从 object trajectory 中随机采样一个 anchor target image $x$。</li>
+<li>从同一个目标的 object trajectory 中随机采样 $M’$ 个 context patches $\mathbf z_{reg} = {z_1,…,z_{M’}}$，其中 $M’ \ge M$。为了避免过拟合，令 $M’ = 2M$。实验中，$M = 8$。</li>
+<li>从 $\mathbf z_{reg}$ 中采样 $M$ 个样本构成 $\mathbf z_\delta$。</li>
+<li>通过公式 2 获得梯度 $\delta$。</li>
+<li>通过最小化损失函数来训练 meta-learner network：</li>
+</ol>
+<img src="https://i.loli.net/2020/05/01/oJleQ7hOIMVuxzW.png" alt="image-20200501161937898" style="zoom:50%;" />
+
+<p>补充：反传时，更新的是 $\theta$ 的梯度。因为是对 meta-learner network 进行训练。</p>
+<h2 id="Experimental-Results"><a href="#Experimental-Results" class="headerlink" title="Experimental Results"></a>Experimental Results</h2><h3 id="Experiments-and-Analysis"><a href="#Experiments-and-Analysis" class="headerlink" title="Experiments and Analysis"></a>Experiments and Analysis</h3><h4 id="Quantitative-Analysis"><a href="#Quantitative-Analysis" class="headerlink" title="Quantitative Analysis"></a>Quantitative Analysis</h4><h5 id="Effect-of-meta-learner-network"><a href="#Effect-of-meta-learner-network" class="headerlink" title="Effect of meta-learner network"></a>Effect of meta-learner network</h5><p>本文提出的算法 MLT 与两个变种 MLT-mt 和 MLT-mt+ft 进行对比：</p>
+<ul>
+<li>MLT-mt 仅有 matching network，参数固定。</li>
+<li>MLT-mt+ft 使用在跟踪时获得的训练样本对 conv5 执行微调。</li>
+</ul>
+<img src="https://i.loli.net/2020/05/01/6zGYWPbMlcUtaNv.png" alt="image-20200501155543248" style="zoom:50%;" />
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Tracking/" rel="tag"># Tracking</a>
+              <a href="/tags/ICCV2019/" rel="tag"># ICCV2019</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/04/25/arXiv1804-Adversarial-Attacks-and-Defences-Competition/" rel="prev" title="[arXiv1804] Adversarial Attacks and Defences Competition">
+      <i class="fa fa-chevron-left"></i> [arXiv1804] Adversarial Attacks and Defences Competition
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/05/02/CVPR2020-A-Disentangling-Invertible-Interpretation-Network-for-Explaining-Latent-Representations/" rel="next" title="[CVPR2020] A Disentangling Invertible Interpretation Network for Explaining Latent Representations">
+      [CVPR2020] A Disentangling Invertible Interpretation Network for Explaining Latent Representations <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Abstract"><span class="nav-number">1.</span> <span class="nav-text">Abstract</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Introduction"><span class="nav-number">2.</span> <span class="nav-text">Introduction</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Tracking-with-Meta-Learner"><span class="nav-number">3.</span> <span class="nav-text">Tracking with Meta-Learner</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Overview-of-Proposed-Method"><span class="nav-number">3.1.</span> <span class="nav-text">Overview of Proposed Method</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Components"><span class="nav-number">3.1.1.</span> <span class="nav-text">Components</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Tracking-algorithm"><span class="nav-number">3.2.</span> <span class="nav-text">Tracking algorithm</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Network-Implementation-and-Training"><span class="nav-number">3.3.</span> <span class="nav-text">Network Implementation and Training</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Matching-Network"><span class="nav-number">3.4.</span> <span class="nav-text">Matching Network</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Meta-Learner-Network"><span class="nav-number">3.4.1.</span> <span class="nav-text">Meta-Learner Network</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Experimental-Results"><span class="nav-number">4.</span> <span class="nav-text">Experimental Results</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Experiments-and-Analysis"><span class="nav-number">4.1.</span> <span class="nav-text">Experiments and Analysis</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Quantitative-Analysis"><span class="nav-number">4.1.1.</span> <span class="nav-text">Quantitative Analysis</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#Effect-of-meta-learner-network"><span class="nav-number">4.1.1.1.</span> <span class="nav-text">Effect of meta-learner network</span></a></li></ol></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">zhbli</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">119</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">46</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zhbli</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+</body>
+</html>

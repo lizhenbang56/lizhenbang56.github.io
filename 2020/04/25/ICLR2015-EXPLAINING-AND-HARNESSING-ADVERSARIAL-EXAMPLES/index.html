@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="ABSTRACThttps:&#x2F;&#x2F;raw.githubusercontent.com&#x2F;pytorch&#x2F;tutorials&#x2F;master&#x2F;beginner_source&#x2F;fgsm_tutorial.py 对抗样本：通过对数据集中的样本进行小的、故意的、最坏情况的扰动，使得网络以告置信度输出错误答案。 以前对这种现象的解释集中于非线性和过度拟合。本文认为神经网络容易受到对抗干扰的原始是网络的线性特性。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[ICLR2015] EXPLAINING AND HARNESSING ADVERSARIAL EXAMPLES">
+<meta property="og:url" content="http://yoursite.com/2020/04/25/ICLR2015-EXPLAINING-AND-HARNESSING-ADVERSARIAL-EXAMPLES/index.html">
+<meta property="og:site_name" content="zhbli">
+<meta property="og:description" content="ABSTRACThttps:&#x2F;&#x2F;raw.githubusercontent.com&#x2F;pytorch&#x2F;tutorials&#x2F;master&#x2F;beginner_source&#x2F;fgsm_tutorial.py 对抗样本：通过对数据集中的样本进行小的、故意的、最坏情况的扰动，使得网络以告置信度输出错误答案。 以前对这种现象的解释集中于非线性和过度拟合。本文认为神经网络容易受到对抗干扰的原始是网络的线性特性。">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://i.loli.net/2020/04/25/fI2FBNwCMYEKbda.png">
+<meta property="og:image" content="https://i.loli.net/2020/04/25/oHUBDlXVavyC3Ti.png">
+<meta property="article:published_time" content="2020-04-25T04:56:08.000Z">
+<meta property="article:modified_time" content="2020-04-25T06:53:22.000Z">
+<meta property="article:author" content="zhbli">
+<meta property="article:tag" content="ICLR2015">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.loli.net/2020/04/25/fI2FBNwCMYEKbda.png">
+
+<link rel="canonical" href="http://yoursite.com/2020/04/25/ICLR2015-EXPLAINING-AND-HARNESSING-ADVERSARIAL-EXAMPLES/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>[ICLR2015] EXPLAINING AND HARNESSING ADVERSARIAL EXAMPLES | zhbli</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">zhbli</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-schedule">
+
+    <a href="/schedule/" rel="section"><i class="fa fa-fw fa-calendar"></i>Schedule</a>
+
+  </li>
+        <li class="menu-item menu-item-sitemap">
+
+    <a href="/sitemap.xml" rel="section"><i class="fa fa-fw fa-sitemap"></i>Sitemap</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="fa fa-fw fa-heartbeat"></i>Commonweal 404</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/04/25/ICLR2015-EXPLAINING-AND-HARNESSING-ADVERSARIAL-EXAMPLES/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="zhbli">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="zhbli">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          [ICLR2015] EXPLAINING AND HARNESSING ADVERSARIAL EXAMPLES
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2020-04-25 12:56:08 / Modified: 14:53:22" itemprop="dateCreated datePublished" datetime="2020-04-25T12:56:08+08:00">2020-04-25</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="ABSTRACT"><a href="#ABSTRACT" class="headerlink" title="ABSTRACT"></a>ABSTRACT</h2><p><a target="_blank" rel="noopener" href="https://raw.githubusercontent.com/pytorch/tutorials/master/beginner_source/fgsm_tutorial.py">https://raw.githubusercontent.com/pytorch/tutorials/master/beginner_source/fgsm_tutorial.py</a></p>
+<p>对抗样本：通过对数据集中的样本进行小的、故意的、最坏情况的扰动，使得网络以告置信度输出错误答案。</p>
+<p>以前对这种现象的解释集中于非线性和过度拟合。本文认为神经网络容易受到对抗干扰的原始是网络的线性特性。</p>
+<p>本文提出了简单快速地生成对抗样本的方法。</p>
+<h2 id="INTRODUCTION"><a href="#INTRODUCTION" class="headerlink" title="INTRODUCTION"></a>INTRODUCTION</h2><p>[Szegedy et al. (2014b)] 提出，神经网络易受对抗样本的攻击。</p>
+<blockquote>
+<p>Szegedy, Christian, Zaremba, Wojciech, Sutskever, Ilya, Bruna, Joan, Erhan, Dumitru, Goodfellow, Ian J., and Fergus, Rob. <strong>Intriguing properties of neural networks</strong>. ICLR, abs/1312.6199, 2014b. URL <a target="_blank" rel="noopener" href="http://arxiv.org/abs/1312.6199">http://arxiv.org/abs/1312.6199</a>.</p>
+</blockquote>
+<h2 id="THE-LINEAR-EXPLANATION-OF-ADVERSARIAL-EXAMPLES"><a href="#THE-LINEAR-EXPLANATION-OF-ADVERSARIAL-EXAMPLES" class="headerlink" title="THE LINEAR EXPLANATION OF ADVERSARIAL EXAMPLES"></a>THE LINEAR EXPLANATION OF ADVERSARIAL EXAMPLES</h2><p>首先，我们解释线性模型中的对抗样本。在很多问题中，输入特征的精度是受限的。例如，如果像素是 8 位的，则图像会丢弃低于动态范围的 1/255 的所有信息。因为特征的精度有限，因此如果扰动的每个元素 $\pmb{\eta}$ 都小于特征精度，则分类器对于输入 $\pmb{x}$ 和对抗输入 $\tilde{\pmb{x}}=\pmb{x}+\pmb{\eta}$ 的响应不同，这是不合理的。我们希望分类器为 $\pmb{x}$ 和 $\tilde{\pmb x}$ 输出相同类别，只要 $||\pmb \eta||_{\infty}&lt;\epsilon$。</p>
+<p>考虑权重向量 $\pmb w$ 和对抗样本的 dot product：</p>
+<img src="https://i.loli.net/2020/04/25/fI2FBNwCMYEKbda.png" alt="image-20200425132139129" style="zoom:50%;" />
+
+<p>对抗扰动使得激活增加了 $\pmb w^{\mathsf T}\pmb \eta$。我们可以在 max norm 约束下，令 $\eta=\text{sign}(\pmb w)$ 从而最大化此增量。如果 $\pmb w$ 是 $n$ 维，weight vector 中元素的平均幅值是 $m$，激活将增加 $\epsilon mn$。</p>
+<p>虽然 $||\pmb \eta||_{\infty}$ 不会随维数增长，但是由 $\eta$ 引起的扰动噪声的激活变化，会随着 $n$ 线性增加。因此对于高维问题，我们可以对输入进行小的变化，而对输入噪声大的更改。</p>
+<p>我们可以将其视为 accidental steganography，其中线性模型被迫处理与其权重最接近的信号，即使存在多个信号，且其他信号具有更大的幅度。</p>
+<h2 id="LINEAR-PERTURBATION-OF-NON-LINEAR-MODELS"><a href="#LINEAR-PERTURBATION-OF-NON-LINEAR-MODELS" class="headerlink" title="LINEAR PERTURBATION OF NON-LINEAR MODELS"></a>LINEAR PERTURBATION OF NON-LINEAR MODELS</h2><p>对抗样本的线性解释，指出了生成对抗样本的快速方法。</p>
+<p>设 $\pmb \theta$ 是网络参数，$\pmb x$ 是网络输入，$y$ 是对应的 targets，$J(\pmb \theta,\pmb x, y)$ 适用于训练网络的 cost。我们可以在 $\pmb \theta$ 的当前值进行线性化，获得 optimal max-morm constrained pertubation：</p>
+<img src="https://i.loli.net/2020/04/25/oHUBDlXVavyC3Ti.png" alt="image-20200425140448919" style="zoom:50%;" />
+
+<p>我们将其称为 <code>fast gradient sign method</code>，用于生成对抗样本。注意，梯度可以通过反向传播进行有效计算。这一简单的算法可以加速对抗网络的训练，或者作为分析神经网络的方法。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/ICLR2015/" rel="tag"># ICLR2015</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/04/24/CVPR2020-Probabilistic-Regression-for-Visual-Tracking/" rel="prev" title="[CVPR2020] Probabilistic Regression for Visual Tracking">
+      <i class="fa fa-chevron-left"></i> [CVPR2020] Probabilistic Regression for Visual Tracking
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/04/25/arXiv1804-Adversarial-Attacks-and-Defences-Competition/" rel="next" title="[arXiv1804] Adversarial Attacks and Defences Competition">
+      [arXiv1804] Adversarial Attacks and Defences Competition <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#ABSTRACT"><span class="nav-number">1.</span> <span class="nav-text">ABSTRACT</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#INTRODUCTION"><span class="nav-number">2.</span> <span class="nav-text">INTRODUCTION</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#THE-LINEAR-EXPLANATION-OF-ADVERSARIAL-EXAMPLES"><span class="nav-number">3.</span> <span class="nav-text">THE LINEAR EXPLANATION OF ADVERSARIAL EXAMPLES</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#LINEAR-PERTURBATION-OF-NON-LINEAR-MODELS"><span class="nav-number">4.</span> <span class="nav-text">LINEAR PERTURBATION OF NON-LINEAR MODELS</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">zhbli</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">119</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">46</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zhbli</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+</body>
+</html>

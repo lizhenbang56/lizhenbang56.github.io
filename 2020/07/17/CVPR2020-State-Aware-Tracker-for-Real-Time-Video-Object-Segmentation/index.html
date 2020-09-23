@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="Abstract本文提出 State Aware Tracker (SAT)，利用了帧间一致性inter-frame consistency。 性能DAVIS2017-Val：72.3% J&amp;F mean 速度：39FPS https:&#x2F;&#x2F;github.com&#x2F;MegviiDetection&#x2F;video_analyst Introduction在VOS任务中，来自先前帧的信息可以被视为时间">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[CVPR2020] State-Aware Tracker for Real-Time Video Object Segmentation">
+<meta property="og:url" content="http://yoursite.com/2020/07/17/CVPR2020-State-Aware-Tracker-for-Real-Time-Video-Object-Segmentation/index.html">
+<meta property="og:site_name" content="zhbli">
+<meta property="og:description" content="Abstract本文提出 State Aware Tracker (SAT)，利用了帧间一致性inter-frame consistency。 性能DAVIS2017-Val：72.3% J&amp;F mean 速度：39FPS https:&#x2F;&#x2F;github.com&#x2F;MegviiDetection&#x2F;video_analyst Introduction在VOS任务中，来自先前帧的信息可以被视为时间">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://i.loli.net/2020/07/17/az6fDo8QBM7s4eG.png">
+<meta property="og:image" content="https://i.loli.net/2020/07/17/Vb3HcliN8oTFO16.png">
+<meta property="og:image" content="https://i.loli.net/2020/07/23/cbknRIUXP83wOd2.png">
+<meta property="article:published_time" content="2020-07-17T02:21:08.000Z">
+<meta property="article:modified_time" content="2020-07-24T05:40:44.000Z">
+<meta property="article:author" content="zhbli">
+<meta property="article:tag" content="Video Object Segmentation">
+<meta property="article:tag" content="CVPR2020">
+<meta property="article:tag" content="Inter-Frame Consistency">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.loli.net/2020/07/17/az6fDo8QBM7s4eG.png">
+
+<link rel="canonical" href="http://yoursite.com/2020/07/17/CVPR2020-State-Aware-Tracker-for-Real-Time-Video-Object-Segmentation/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>[CVPR2020] State-Aware Tracker for Real-Time Video Object Segmentation | zhbli</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">zhbli</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-schedule">
+
+    <a href="/schedule/" rel="section"><i class="fa fa-fw fa-calendar"></i>Schedule</a>
+
+  </li>
+        <li class="menu-item menu-item-sitemap">
+
+    <a href="/sitemap.xml" rel="section"><i class="fa fa-fw fa-sitemap"></i>Sitemap</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="fa fa-fw fa-heartbeat"></i>Commonweal 404</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/07/17/CVPR2020-State-Aware-Tracker-for-Real-Time-Video-Object-Segmentation/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="zhbli">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="zhbli">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          [CVPR2020] State-Aware Tracker for Real-Time Video Object Segmentation
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-07-17 10:21:08" itemprop="dateCreated datePublished" datetime="2020-07-17T10:21:08+08:00">2020-07-17</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-07-24 13:40:44" itemprop="dateModified" datetime="2020-07-24T13:40:44+08:00">2020-07-24</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="Abstract"><a href="#Abstract" class="headerlink" title="Abstract"></a>Abstract</h2><p>本文提出 <code>State Aware Tracker (SAT)</code>，利用了帧间一致性<code>inter-frame consistency</code>。</p>
+<h3 id="性能"><a href="#性能" class="headerlink" title="性能"></a>性能</h3><p>DAVIS2017-Val：72.3% J&amp;F mean</p>
+<p>速度：39FPS</p>
+<p><a target="_blank" rel="noopener" href="https://github.com/MegviiDetection/video_analyst">https://github.com/MegviiDetection/video_analyst</a></p>
+<h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><p>在VOS任务中，来自先前帧的信息可以被视为时间上下文，这可以为后续预测提供有用的提示。</p>
+<img src="https://i.loli.net/2020/07/17/az6fDo8QBM7s4eG.png" alt="image-20200717104519088" style="zoom: 33%;" />
+
+<h3 id="先前算法的缺点"><a href="#先前算法的缺点" class="headerlink" title="先前算法的缺点"></a>先前算法的缺点</h3><p>以前的方法[22,17,31,27,31]使用特征级联<code>feature concatenation</code>，相关<code>correlation</code>或光流<code>optical flow</code>将前一帧预测的mask或特征传播到当前帧，但是它们具有明显的缺点：</p>
+<ol>
+<li>先前的工作通常会在完整图像上传播信息，但目标通常会占据较小的区域。因此在全图上操作会造成计算冗余。</li>
+<li>目标在整个视频中可能会经历不同的状态，但是先前的方法使用固定的传播状态，没有进行自适应<code>adaptation</code>，容易使得在长序列上不稳定。</li>
+<li>仅从利用第一帧或前一帧进行目标建模<code>target modeling</code>，但这不足以进行<code>holistic representation</code>。</li>
+</ol>
+<blockquote>
+<p>[22] Paul Voigtlaender, Yuning Chai, Florian Schroff, Hartwig Adam, Bastian Leibe, and Liang-Chieh Chen. <strong>Feelvos: Fast end-to-end embedding learning for video object segmentation</strong>. In Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition, pages 9481–9490, 2019.</p>
+<p>[17] Federico Perazzi, Anna Khoreva, Rodrigo Benenson, Bernt Schiele, and Alexander Sorkine-Hornung. <strong>Learning video object segmentation from static images</strong>. In Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition, pages 2663–2672, 2017.</p>
+<p>[31] Linjie Yang, Yanran Wang, Xuehan Xiong, Jianchao Yang, and Aggelos K Katsaggelos. <strong>Efficient video object segmentation via network modulation</strong>. In Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition, pages 6499–6507, 2018.</p>
+<p>[27] Huaxin Xiao, Jiashi Feng, Guosheng Lin, Yu Liu, and Maojun Zhang. <strong>Monet: Deep motion exploitation for video object segmentation</strong>. In Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition, pages 1140– 1148, 2018.</p>
+</blockquote>
+<h3 id="本文的解决方法"><a href="#本文的解决方法" class="headerlink" title="本文的解决方法"></a>本文的解决方法</h3><p>本文将VOS重新定义为状态估计<code>state estimation</code>和<code>target modeling</code>的连续过程，其中分割是状态估计的一部分。</p>
+<p>SAT利用帧间一致性，将每个目标视为一个小轨迹<code>tracklet</code>。</p>
+<p>为了构建可靠的信息流，提出估计反馈机制<code>estimation-feedback mechanism</code>，使算法了解当前状态并针对不同状态进行自适应。</p>
+<p>SAT使用时间上下文动态构建全局表示<code>global representation </code>，用于在整个视频序列中提供可靠的视觉引导<code>visual guidance</code>。</p>
+<p><img src="https://i.loli.net/2020/07/17/Vb3HcliN8oTFO16.png" alt="image-20200717112006016"></p>
+<h4 id="推理过程"><a href="#推理过程" class="headerlink" title="推理过程"></a>推理过程</h4><p>分为如下三步：</p>
+<ol>
+<li><strong>Segmentation</strong>：SAT在目标周围裁剪搜索区域，并将每个目标作为小轨迹。联合分割网络<code> Joint Segmentation Network</code>可预测每个小轨迹的mask。</li>
+<li><strong>Estimation</strong>：状态估计器<code>State Estimator</code>评估分割结果并产生状态得分以表示当前状态。</li>
+<li><strong>Feedback</strong>：基于状态估计结果，设计了两个反馈回路<code> feedback loops</code>。<ol>
+<li><strong>Cropping Strategy Loop</strong>：自适应地选择不同的方法来预测目标的边界框。然后，我们根据预测框裁剪下一帧的搜索区域。这种切换策略<code>switching strategy</code>使跟踪过程随着时间的推移更加稳定。</li>
+<li><strong>Global Modeling Loop</strong>：使用状态估计结果动态更新全局特征。全局特征可以协助联合分割网络生成更好的分割结果。</li>
+</ol>
+</li>
+</ol>
+<h2 id="Related-Work"><a href="#Related-Work" class="headerlink" title="Related Work"></a>Related Work</h2><p>[17] 将前一帧预测的mask与当前帧的图像连接起来，以提供空间引导。</p>
+<p>[22] 提出逐像素相关性，以在连续帧上传递位置敏感的嵌入。</p>
+<blockquote>
+<p>[22] Paul Voigtlaender, Yuning Chai, Florian Schroff, Hartwig Adam, Bastian Leibe, and Liang-Chieh Chen. <strong>Feelvos: Fast end-to-end embedding learning for video object segmentation</strong>. In Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition, pages 9481–9490, 2019.</p>
+</blockquote>
+<h2 id="Method"><a href="#Method" class="headerlink" title="Method"></a>Method</h2><p><img src="https://i.loli.net/2020/07/23/cbknRIUXP83wOd2.png" alt="image-20200723132410035"></p>
+<h3 id="Segmentation"><a href="#Segmentation" class="headerlink" title="Segmentation"></a>Segmentation</h3><h4 id="显著性编码器"><a href="#显著性编码器" class="headerlink" title="显著性编码器"></a>显著性编码器</h4><p>输入：以目标为中心的图像块。</p>
+<h4 id="相似性编码器"><a href="#相似性编码器" class="headerlink" title="相似性编码器"></a>相似性编码器</h4><p>输入：当前帧的搜索区域和第一帧的目标区域。</p>
+<p>通过逐元素相加将如下三个特征进行融合：</p>
+<ol>
+<li>显著性编码器的特征</li>
+<li>相似性编码器的特征</li>
+<li>全局特征</li>
+</ol>
+<h3 id="Estimation"><a href="#Estimation" class="headerlink" title="Estimation"></a>Estimation</h3><p>通过手工设置的规则，为预测的模板打分。</p>
+<h2 id="Experiments"><a href="#Experiments" class="headerlink" title="Experiments"></a>Experiments</h2><h3 id="Network-Training"><a href="#Network-Training" class="headerlink" title="Network Training"></a>Network Training</h3><p>训练分为两个阶段：</p>
+<ol>
+<li>在目标跟踪数据集上训练 similarity encoder 和 regression head。</li>
+<li>固定 similarity encoder 和 regression head 的权重，训练整个网络。Saliency encoder 的 backbone 和 Global  Modeling Loop 的特征提取器在 ImageNet 上进行预训练。</li>
+</ol>
+<p>训练集包括 COCO，DAVIS2017 training set 和 YouTube-VOS training set。</p>
+<p>训练时，在一段视频中随机选择一张 target image 和 一张 search image。Saliency encoder 将 cropped search image 作为输入，而 Global  Modeling Loop 将 cropped target image 作为输入。使用 ground truth mask 过滤 target image 的背景，以训练 Global Modeling Loop 的特征提取器。</p>
+<p>其他参数：</p>
+<ul>
+<li>batch size = 16</li>
+<li>gpu_num = 8</li>
+<li>训练时间 = 8h</li>
+<li>epoch = 20</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Video-Object-Segmentation/" rel="tag"># Video Object Segmentation</a>
+              <a href="/tags/CVPR2020/" rel="tag"># CVPR2020</a>
+              <a href="/tags/Inter-Frame-Consistency/" rel="tag"># Inter-Frame Consistency</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/05/15/CVPR2019-Deeper-and-Wider-Siamese-Networks-for-Real-Time-Visual-Tracking/" rel="prev" title="[CVPR2019] Deeper and Wider Siamese Networks for Real-Time Visual Tracking">
+      <i class="fa fa-chevron-left"></i> [CVPR2019] Deeper and Wider Siamese Networks for Real-Time Visual Tracking
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/07/17/CVPR2017-Learning-video-object-segmentation-from-static-images/" rel="next" title="[CVPR2017] Learning video object segmentation from static images">
+      [CVPR2017] Learning video object segmentation from static images <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Abstract"><span class="nav-number">1.</span> <span class="nav-text">Abstract</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%80%A7%E8%83%BD"><span class="nav-number">1.1.</span> <span class="nav-text">性能</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Introduction"><span class="nav-number">2.</span> <span class="nav-text">Introduction</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%88%E5%89%8D%E7%AE%97%E6%B3%95%E7%9A%84%E7%BC%BA%E7%82%B9"><span class="nav-number">2.1.</span> <span class="nav-text">先前算法的缺点</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%AC%E6%96%87%E7%9A%84%E8%A7%A3%E5%86%B3%E6%96%B9%E6%B3%95"><span class="nav-number">2.2.</span> <span class="nav-text">本文的解决方法</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%8E%A8%E7%90%86%E8%BF%87%E7%A8%8B"><span class="nav-number">2.2.1.</span> <span class="nav-text">推理过程</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Related-Work"><span class="nav-number">3.</span> <span class="nav-text">Related Work</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Method"><span class="nav-number">4.</span> <span class="nav-text">Method</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Segmentation"><span class="nav-number">4.1.</span> <span class="nav-text">Segmentation</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%98%BE%E8%91%97%E6%80%A7%E7%BC%96%E7%A0%81%E5%99%A8"><span class="nav-number">4.1.1.</span> <span class="nav-text">显著性编码器</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%9B%B8%E4%BC%BC%E6%80%A7%E7%BC%96%E7%A0%81%E5%99%A8"><span class="nav-number">4.1.2.</span> <span class="nav-text">相似性编码器</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Estimation"><span class="nav-number">4.2.</span> <span class="nav-text">Estimation</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Experiments"><span class="nav-number">5.</span> <span class="nav-text">Experiments</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Network-Training"><span class="nav-number">5.1.</span> <span class="nav-text">Network Training</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">zhbli</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">119</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">46</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zhbli</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+</body>
+</html>

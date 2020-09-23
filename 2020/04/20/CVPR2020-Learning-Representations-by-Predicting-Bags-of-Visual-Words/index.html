@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="Abstract提出基于 spatially dense image descriptions 的自监督方法，编码了离散的视觉概念（visual words）。 为了建立这种离散表示，我们通过基于词表的 k-means，对预训练的自监督网络的特征图进行量化。然后我们自监督训练另一个网络，预测图像的 visual words 的直方图（Bags-of-Words），该网络的输入是经过扰动的图像。 I">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[CVPR2020] Learning Representations by Predicting Bags of Visual Words">
+<meta property="og:url" content="http://yoursite.com/2020/04/20/CVPR2020-Learning-Representations-by-Predicting-Bags-of-Visual-Words/index.html">
+<meta property="og:site_name" content="zhbli">
+<meta property="og:description" content="Abstract提出基于 spatially dense image descriptions 的自监督方法，编码了离散的视觉概念（visual words）。 为了建立这种离散表示，我们通过基于词表的 k-means，对预训练的自监督网络的特征图进行量化。然后我们自监督训练另一个网络，预测图像的 visual words 的直方图（Bags-of-Words），该网络的输入是经过扰动的图像。 I">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://i.loli.net/2020/04/20/se2IuhaMJ438yHL.png">
+<meta property="og:image" content="https://i.loli.net/2020/04/20/nSV7EXKhcomHTgA.png">
+<meta property="og:image" content="https://i.loli.net/2020/04/20/38BUWAQ6DcSsgGf.png">
+<meta property="og:image" content="https://i.loli.net/2020/04/20/MQvL2Pzxc5ugieI.png">
+<meta property="og:image" content="https://i.loli.net/2020/04/20/9e6xdLshky2IJ4Q.png">
+<meta property="og:image" content="https://i.loli.net/2020/04/20/MOgzVDr3djlSIQa.png">
+<meta property="og:image" content="https://i.loli.net/2020/04/20/R7OT2m9hIHKXalr.png">
+<meta property="og:image" content="https://i.loli.net/2020/04/20/LJkFxOuiZ9hYUKt.png">
+<meta property="article:published_time" content="2020-04-20T06:38:42.000Z">
+<meta property="article:modified_time" content="2020-04-20T08:09:26.000Z">
+<meta property="article:author" content="zhbli">
+<meta property="article:tag" content="CVPR2020">
+<meta property="article:tag" content="Self-Supervised Learning">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.loli.net/2020/04/20/se2IuhaMJ438yHL.png">
+
+<link rel="canonical" href="http://yoursite.com/2020/04/20/CVPR2020-Learning-Representations-by-Predicting-Bags-of-Visual-Words/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>[CVPR2020] Learning Representations by Predicting Bags of Visual Words | zhbli</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">zhbli</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-schedule">
+
+    <a href="/schedule/" rel="section"><i class="fa fa-fw fa-calendar"></i>Schedule</a>
+
+  </li>
+        <li class="menu-item menu-item-sitemap">
+
+    <a href="/sitemap.xml" rel="section"><i class="fa fa-fw fa-sitemap"></i>Sitemap</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="fa fa-fw fa-heartbeat"></i>Commonweal 404</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/04/20/CVPR2020-Learning-Representations-by-Predicting-Bags-of-Visual-Words/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="zhbli">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="zhbli">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          [CVPR2020] Learning Representations by Predicting Bags of Visual Words
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2020-04-20 14:38:42 / Modified: 16:09:26" itemprop="dateCreated datePublished" datetime="2020-04-20T14:38:42+08:00">2020-04-20</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="Abstract"><a href="#Abstract" class="headerlink" title="Abstract"></a>Abstract</h2><p>提出基于 spatially dense image descriptions 的自监督方法，编码了离散的视觉概念（visual words）。</p>
+<p>为了建立这种离散表示，我们通过基于词表的 k-means，对预训练的自监督网络的特征图进行量化。然后我们自监督训练另一个网络，预测图像的 visual words 的直方图（Bags-of-Words），该网络的输入是经过扰动的图像。</p>
+<h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><h2 id="Approach"><a href="#Approach" class="headerlink" title="Approach"></a>Approach</h2><p><img src="https://i.loli.net/2020/04/20/se2IuhaMJ438yHL.png" alt="image-20200420144105047"></p>
+<p>我们的目的是，以无监督形式训练网络 $\Phi(\cdot)$，使得为图像产生“好”的特征表示。“好”指的是，有利于图像分类，目标检测等视觉任务。</p>
+<p>我们假设有一个可用的初始自监督预训练网络 $\hat \Phi(\cdot)$，即 RotNet。</p>
+<p>算法流程：</p>
+<ol>
+<li>我们利用 $\hat \Phi(\cdot)$ 创建基于 visual words 的 spatially dense descriptions。</li>
+<li>将这些 descriptions 聚合为 BoW representations。</li>
+<li>训练模型 $\Phi(\cdot)$ 以重构 BoW，输入为扰动的图像。</li>
+<li>注意，训练 $\Phi(\cdot)$ 时，$\hat \Phi(\cdot)$ 保持冻结。</li>
+<li>训练了 $\Phi(\cdot)$ 之后，设置 $\hat \Phi(\cdot) \leftarrow\Phi(\cdot)$ 并重复训练过程。</li>
+</ol>
+<h3 id="Building-spatially-dense-discrete-descriptions"><a href="#Building-spatially-dense-discrete-descriptions" class="headerlink" title="Building spatially dense discrete descriptions"></a>Building spatially dense discrete descriptions</h3><p>给定一幅训练图像 $\mathbf{x}$，算法第一步是使用 $\hat \Phi(\cdot)$创建 spatially dense visual words-based description $q(\cdot)$。</p>
+<p>设 $\hat \Phi(\mathbf{x})$ 是特征图，通道为 $\hat c$，空间分辨率为 $\hat h \times \hat w$。$\hat \Phi^u(\mathbf{x})$ 是位于位置 $u$ 的特征向量。$U=\hat h \times \hat w$。</p>
+<p>为了得到 description $q(\mathbf{x}) = [q^1(\mathbf{x}), …, q^U(\mathbf{x})])$，我们使用预定义词表 $V=[\mathbf{v}_1, …, \mathbf{v}_K]$ 对 $\hat \Phi(\mathbf{x})$ 执行密集量化。该词表包含 $\hat c$ 维的 visual word embeddings，$K$ 是词表尺寸。</p>
+<p>具体而言，为每个特征向量 $\hat \Phi^u(\mathbf{x})$ 根据最近的欧氏距离分类一个 visual word embedding $q^u(\mathbf{x})$：</p>
+<img src="https://i.loli.net/2020/04/20/nSV7EXKhcomHTgA.png" alt="image-20200420144132506" style="zoom:50%;" />
+
+<p>注意，$q^u(\mathbf{x})$ 是一个标量。</p>
+<p>词表 $V$ 的学习：在数据集 $X$ 的特征图的集合上，应用 k-means 算法，clusters 为 $K$：</p>
+<img src="https://i.loli.net/2020/04/20/38BUWAQ6DcSsgGf.png" alt="image-20200420153412621" style="zoom:50%;" />
+
+<p>其中 visual word embedding $\mathbf{v}_k$ 是 $k$-th cluster 的中心。</p>
+<h3 id="Generating-Bag-of-Words-representations"><a href="#Generating-Bag-of-Words-representations" class="headerlink" title="Generating Bag-of-Words representations"></a>Generating Bag-of-Words representations</h3><p>得到 discrete description $q(\mathbf{x})$ 后，下一步是创建它的 BoW representation $y(\mathbf{x})$。这是一个 $K$ 维向量，元素 $y^k(\mathbf{x})$ 要么表示 $k-th$ visual word 出现的次数：</p>
+<img src="https://i.loli.net/2020/04/20/MQvL2Pzxc5ugieI.png" alt="image-20200420144219450" style="zoom:50%;" />
+
+<p>要么表示 $k$-th visual word 是否在图像中出现：</p>
+<img src="https://i.loli.net/2020/04/20/9e6xdLshky2IJ4Q.png" alt="image-20200420154442474" style="zoom:50%;" />
+
+<p>为了将 $y^k(\mathbf{x})$ 转为 visual words 上的概率分布，使用 $L_1$ 正则化：</p>
+<img src="https://i.loli.net/2020/04/20/MOgzVDr3djlSIQa.png" alt="image-20200420154610839" style="zoom:50%;" />
+
+<p>因此 $y(\mathbf{x})$ 可以解释为 $K$ 个 visual words 的 soft categorical label。</p>
+<h3 id="Learning-to-“reconstruct”-BoW"><a href="#Learning-to-“reconstruct”-BoW" class="headerlink" title="Learning to “reconstruct” BoW"></a>Learning to “reconstruct” BoW</h3><p>基于上述的 BoW representation，我们提出如下自监督任务：给定输入图片 $\mathbf{x}$，执行扰动操作 $g(\cdot)$，得到扰动的图像 $\tilde{\mathbf{x}} = g(\mathbf{x})$，然后训练模型来预测/重构原始图像 $\mathbf{x}$ 的 BoW representation $y(\mathbf{x})$。</p>
+<p>我们希望通过特征向量 $\Phi(\tilde{\mathbf{x}}) \in \mathbb{R}^c$ 预测  BoW representation $y(\mathbf{x})$。</p>
+<p>为此，我们定义 prediction layer $\Omega(\cdot)$，将 $\Phi(\tilde{\mathbf{x}})$ 作为输入，输出 BoW representatoin 的 $K$ 个 visual words 的 $K$ 维 softmax distribution。具体而言，prediction layer 是通过线性层加 softmax 层实现的：</p>
+<img src="https://i.loli.net/2020/04/20/R7OT2m9hIHKXalr.png" alt="image-20200420144337253" style="zoom:50%;" />
+
+<h4 id="Self-supervised-training-objective"><a href="#Self-supervised-training-objective" class="headerlink" title="Self-supervised training objective"></a>Self-supervised training objective</h4><p>损失函数为交叉熵损失：</p>
+<img src="https://i.loli.net/2020/04/20/LJkFxOuiZ9hYUKt.png" alt="image-20200420144407297" style="zoom:50%;" />
+
+<h4 id="分析"><a href="#分析" class="headerlink" title="## 分析"></a>## 分析</h4><p>Q：如何保证经过训练的 $\Phi(\cdot)$ 的特征表示，比 $\hat \Phi(\cdot)$ 更好呢？</p>
+<p>A：关键在于图像扰动。也就是说，如果没有图像扰动，无法让 $\Phi(\cdot)$ 的特征比 $\hat \Phi(\cdot)$ 更好，而倾向于使 $\Phi(\cdot)$ 与 $\hat \Phi(\cdot)$ 恒等。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/CVPR2020/" rel="tag"># CVPR2020</a>
+              <a href="/tags/Self-Supervised-Learning/" rel="tag"># Self-Supervised Learning</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/04/20/arXiv2004-A-Simple-Baseline-for-Multi-Object-Tracking/" rel="prev" title="[arXiv2004] A Simple Baseline for Multi-Object Tracking">
+      <i class="fa fa-chevron-left"></i> [arXiv2004] A Simple Baseline for Multi-Object Tracking
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/04/20/CVPR2020-X3D-Expanding-Architectures-for-Efficient-Video-Recognition/" rel="next" title="[CVPR2020] X3D: Expanding Architectures for Efficient Video Recognition">
+      [CVPR2020] X3D: Expanding Architectures for Efficient Video Recognition <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Abstract"><span class="nav-number">1.</span> <span class="nav-text">Abstract</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Introduction"><span class="nav-number">2.</span> <span class="nav-text">Introduction</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Approach"><span class="nav-number">3.</span> <span class="nav-text">Approach</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Building-spatially-dense-discrete-descriptions"><span class="nav-number">3.1.</span> <span class="nav-text">Building spatially dense discrete descriptions</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Generating-Bag-of-Words-representations"><span class="nav-number">3.2.</span> <span class="nav-text">Generating Bag-of-Words representations</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Learning-to-%E2%80%9Creconstruct%E2%80%9D-BoW"><span class="nav-number">3.3.</span> <span class="nav-text">Learning to “reconstruct” BoW</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Self-supervised-training-objective"><span class="nav-number">3.3.1.</span> <span class="nav-text">Self-supervised training objective</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%88%86%E6%9E%90"><span class="nav-number">3.3.2.</span> <span class="nav-text">## 分析</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">zhbli</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">119</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">46</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zhbli</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+</body>
+</html>

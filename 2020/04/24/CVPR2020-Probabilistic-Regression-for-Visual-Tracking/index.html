@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="Abstrathttps:&#x2F;&#x2F;github.com&#x2F;visionml&#x2F;pytracking 现有跟踪算法的问题：表示目标估计的不确定性很重要。现有算法虽然估计了 confidence score，但是缺少清晰的概率解释。 本文的解决方案：提出 probabilistic regression formulation，为目标状态估计 conditional probability density。我">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[CVPR2020] Probabilistic Regression for Visual Tracking">
+<meta property="og:url" content="http://yoursite.com/2020/04/24/CVPR2020-Probabilistic-Regression-for-Visual-Tracking/index.html">
+<meta property="og:site_name" content="zhbli">
+<meta property="og:description" content="Abstrathttps:&#x2F;&#x2F;github.com&#x2F;visionml&#x2F;pytracking 现有跟踪算法的问题：表示目标估计的不确定性很重要。现有算法虽然估计了 confidence score，但是缺少清晰的概率解释。 本文的解决方案：提出 probabilistic regression formulation，为目标状态估计 conditional probability density。我">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://i.loli.net/2020/04/24/p9kYaRDuE5s3UKW.png">
+<meta property="og:image" content="https://i.loli.net/2020/04/24/l1DGzs5ARI2uYVn.png">
+<meta property="og:image" content="https://i.loli.net/2020/04/24/HEYuaziDn8xoZJ6.png">
+<meta property="og:image" content="https://i.loli.net/2020/04/24/248BmdOJqrDCMaU.png">
+<meta property="og:image" content="https://i.loli.net/2020/04/24/KwHlbf81npSrMqN.png">
+<meta property="og:image" content="https://i.loli.net/2020/04/24/vig5G3JWL2URtTd.png">
+<meta property="og:image" content="https://i.loli.net/2020/04/24/nZ2oYrqLU8MASju.png">
+<meta property="og:image" content="https://i.loli.net/2020/04/24/VtXgPEn5krApIlv.png">
+<meta property="article:published_time" content="2020-04-24T11:28:44.000Z">
+<meta property="article:modified_time" content="2020-05-13T10:29:46.000Z">
+<meta property="article:author" content="zhbli">
+<meta property="article:tag" content="Tracking">
+<meta property="article:tag" content="CVPR2020">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.loli.net/2020/04/24/p9kYaRDuE5s3UKW.png">
+
+<link rel="canonical" href="http://yoursite.com/2020/04/24/CVPR2020-Probabilistic-Regression-for-Visual-Tracking/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>[CVPR2020] Probabilistic Regression for Visual Tracking | zhbli</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">zhbli</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-schedule">
+
+    <a href="/schedule/" rel="section"><i class="fa fa-fw fa-calendar"></i>Schedule</a>
+
+  </li>
+        <li class="menu-item menu-item-sitemap">
+
+    <a href="/sitemap.xml" rel="section"><i class="fa fa-fw fa-sitemap"></i>Sitemap</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="fa fa-fw fa-heartbeat"></i>Commonweal 404</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/04/24/CVPR2020-Probabilistic-Regression-for-Visual-Tracking/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="zhbli">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="zhbli">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          [CVPR2020] Probabilistic Regression for Visual Tracking
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-04-24 19:28:44" itemprop="dateCreated datePublished" datetime="2020-04-24T19:28:44+08:00">2020-04-24</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-05-13 18:29:46" itemprop="dateModified" datetime="2020-05-13T18:29:46+08:00">2020-05-13</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Tracking/" itemprop="url" rel="index"><span itemprop="name">Tracking</span></a>
+                </span>
+                  , 
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Tracking/Loss/" itemprop="url" rel="index"><span itemprop="name">Loss</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="Abstrat"><a href="#Abstrat" class="headerlink" title="Abstrat"></a>Abstrat</h2><p><a target="_blank" rel="noopener" href="https://github.com/visionml/pytracking">https://github.com/visionml/pytracking</a></p>
+<p>现有跟踪算法的问题：表示目标估计的不确定性很重要。现有算法虽然估计了 confidence score，但是缺少清晰的概率解释。</p>
+<p>本文的解决方案：提出 probabilistic regression formulation，为目标状态估计 <code>conditional probability density</code>。我们的方法可以建模标签噪声。网络通过最小化 KL 散度进行训练。</p>
+<h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><p>目标跟踪可以建模为一个回归问题。这些跟踪算法的共同做法是：对于<code>一幅图像</code> $x$，给定任意状态 $y$，预测一个 confidence value $s(y,x)$，target state 通过最大化 predicted confidence 来获得：$y^* = \arg\max_ys(y,x)$。</p>
+<p>上述提及的 <code>confidence-based regression</code> 方法被 DCF 和孪生跟踪器所共享，这两种方法都在每个<strong>空间位置</strong> $y$ 上执行卷积操作来获得 target confidence $s(y,x)$ 以定位目标。也有些方法进行边框回归：预测 entire target box $y$ 的 confidence $s(y,x)$。</p>
+<p><code>confidence-based regression</code> 的一个优点是可以建模不确定性。相反，对于直接回归方法，$y=f(x)$ 让网络做出 single prediction $y$，无法提供其他信息。</p>
+<p>然而，confidence value $s(y,x)$ 没有清晰的解释，因为仅仅用于求最大化。因此，取值范围和 predicted confidence 的特性在很大程度上取决于损失函数和用于训练的 <code>pseudo labels</code>。</p>
+<h3 id="Contributions"><a href="#Contributions" class="headerlink" title="Contributions"></a>Contributions</h3><p>我们提出学习预测 <code>conditional probability density</code> $p(y|x)$。与 confidence value $s(y,x)$ 不同，density  $p(y|x)$ 具有清晰直接的解释，允许计算绝对概率。</p>
+<h2 id="Regression-by-Confidence-Prediction"><a href="#Regression-by-Confidence-Prediction" class="headerlink" title="Regression by Confidence Prediction"></a>Regression by Confidence Prediction</h2><h3 id="General-Formulation"><a href="#General-Formulation" class="headerlink" title="General Formulation"></a>General Formulation</h3><p>在计算机视觉中，回归是一个基本的问题，用于学习从输入空间 $\mathcal{X}$ 到连续输出空间 $\mathcal{Y}$ 的映射 $f_\theta : \mathcal{X \rightarrow Y}$。</p>
+<p>在计算机视觉的一些任务中，会采用直接回归的方法。但是在另一些工作中，网络会预测一个 confidence score。这种 confidence prediction 相比于直接回归由两个好处：</p>
+<ol>
+<li>confidence prediction 可以捕获输出空间 $\mathcal Y$ 中的不确定性、多假设和歧义。</li>
+<li>网络可以利用 $\mathcal{X}$ 和 $\mathcal{Y}$ 共享的对称性，如平移不变性。</li>
+</ol>
+<p>定义 $\mathcal X$ 为图像空间。</p>
+<p>定义 <code>confidence-based regression</code> 为学习一个函数 $s_\theta: \mathcal{Y\times X}\rightarrow \mathbb{R}$，用于预测一个标量置信度得分 $s_\theta (y,x)\in \mathbb{R}$。$(y,x)$ 为 input-output pair。Final estimation $f(x) = y^*$ 通过下式计算：</p>
+<img src="https://i.loli.net/2020/04/24/p9kYaRDuE5s3UKW.png" alt="image-20200424193424270" style="zoom:50%;" />
+
+<p>这时，回归问题就转变成了从数据 ${(x_i,y_i)}_i$ 中学习函数 $s_\theta$。这通常需要定义一个 <code>pseudo label</code> $a(y,y_i), a:\mathcal{Y\times Y}\rightarrow\mathbb{R}$，作为 prediction $s_\theta (y,x_i)$ 的 ground-truth confidence value。注意，此处的 $y_i$ 表示图像 $x_i$ 的 ground truth，是一个固定值。而 $y$ 表示空间上的任意位置。</p>
+<img src="https://i.loli.net/2020/04/24/l1DGzs5ARI2uYVn.png" alt="image-20200424193438062" style="zoom:50%;" />
+
+<p>其中损失函数 $\ell:\mathbb{R\times R\rightarrow R}$ 表示 predicted confidence value $s_\theta(y,x_i)$ 和对应的 label value $a(y,y_i)$ 之间的差异。实际上，损失函数和 <code>pseudo label functions</code> $a$ 针对不同的任务有多种选择。</p>
+<h3 id="In-Visual-Tracking"><a href="#In-Visual-Tracking" class="headerlink" title="In Visual Tracking"></a>In Visual Tracking</h3><p>在目标跟踪中，需要回归的状态通常表示为边框 $y\in\mathbb R^4$。然而由于困难性，以前的方法常常回归边框中点 $y\in\mathbb R^2$。</p>
+<p>DCF 跟踪器：</p>
+<img src="https://i.loli.net/2020/04/24/HEYuaziDn8xoZJ6.png" alt="image-20200424193451723" style="zoom:50%;" />
+
+<p>其中 $w_\theta$ 是卷积核，$\phi(x)$ 是图像特征。DCF 的损失函数为 $\ell(s,a)=(s-a)^2$。几乎所有的 DCF 方法的 pseudo label 为 $a(y,y_i)=e^{-\frac{||y-y_i||^2}{2\sigma^2}}$。</p>
+<p>孪生跟踪器：</p>
+<img src="https://i.loli.net/2020/04/24/248BmdOJqrDCMaU.png" alt="image-20200424193502831" style="zoom:50%;" />
+
+<p>孪生跟踪器的损失函数通常为 <code>binary cross entropy loss</code>：</p>
+<img src="https://i.loli.net/2020/04/24/KwHlbf81npSrMqN.png" alt="image-20200424193511207" style="zoom:50%;" />
+
+<p>孪生网络的 pseudo label 为 $a(y,y_i)\in[0,1]$。</p>
+<h2 id="Method"><a href="#Method" class="headerlink" title="Method"></a>Method</h2><p>本文提出 <code>probabilistic regression model</code>，整合上述 <code>confidence-based regression</code> 的所有优点。与上述方法不同，我们的方法的输出是 <code>predictive probability distribution</code> $p(y|x_i,\theta)$。网络通过优化 predictive density $p(y|x,\theta)$ 和 <code>conditional ground-truth distribution</code> $p(y|y_i)$ 的 KL 散度来训练，这样可以建模标签噪声和任务歧义。$p(y|y_i)$ 取代了 $a$ 的作用。</p>
+<h3 id="Representation"><a href="#Representation" class="headerlink" title="Representation"></a>Representation</h3><p>给定输入 $x$，预测输出 $y$ 的 <code>probability distribution</code> $p(y|x,\theta)$。</p>
+<img src="https://i.loli.net/2020/04/24/vig5G3JWL2URtTd.png" alt="image-20200424193530376" style="zoom:50%;" />
+
+<p>该公式通过取幂并除以归一化常数，将 $s_\theta$ 转化为 <code>probability density</code>。注意，上式是在任意输出空间 $\mathcal Y$ 上应用 SoftMax 的直接泛化。</p>
+<p>给定训练样本对 ${(x_i,y_i)}_i$，最简单的训练方法是最小化 <code>negative log-likelihood</code>：</p>
+<img src="https://i.loli.net/2020/04/24/nZ2oYrqLU8MASju.png" alt="image-20200424193542299" style="zoom:50%;" />
+
+<p>接下来讨论该方法的缺点。</p>
+<h3 id="Label-Uncertainty-and-Learning-Objective"><a href="#Label-Uncertainty-and-Learning-Objective" class="headerlink" title="Label Uncertainty and Learning Objective"></a>Label Uncertainty and Learning Objective</h3><p>通常采用边框的中心点作为标签。但是有些边框的中心并不具有语义信息。因此使用边框中心点进行训练会产生歧义。另外，标注的边框有时不是特别准。然而这些因素在训练时常常不被考虑。为了解决这一问题，我们通过最小化 KL 散度来训练网络：</p>
+<img src="https://i.loli.net/2020/04/24/VtXgPEn5krApIlv.png" alt="image-20200424193601783" style="zoom:50%;" />
+
+<p>该公式描述了两个分布之间的 cross entropy。</p>
+<p>补充：KL 散度是两个概率分布之间差别的非对称性度量。当且仅当两个分布相同时，kL 散度等于 0。</p>
+<p>与 <code>pseudo label function</code> $a(y|y_i)$ 不同，$p(y|y_i)$ 具有明确的概率分布解释。在高斯模型 $p(y|y_i)=\mathcal N(y|y_i, \sigma^2)$ 的情况下，方差 $\sigma^2$ 可以轨迹为 annotations 的经验方差。本文仅将方差视为超参数。</p>
+<p>补充：$p(y|y_i)=\mathcal N(y|y_i, \sigma^2) = \frac{1}{\sqrt{2\pi}\sigma}\exp(-\frac{(y_i-\mu)^2}{2\sigma^2})$。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Tracking/" rel="tag"># Tracking</a>
+              <a href="/tags/CVPR2020/" rel="tag"># CVPR2020</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/04/24/AAAI2020-GlobalTrack-A-Simple-and-Strong-Baseline-for-Long-term-Tracking/" rel="prev" title="[AAAI2020] GlobalTrack: A Simple and Strong Baseline for Long-term Tracking">
+      <i class="fa fa-chevron-left"></i> [AAAI2020] GlobalTrack: A Simple and Strong Baseline for Long-term Tracking
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/04/25/ICLR2015-EXPLAINING-AND-HARNESSING-ADVERSARIAL-EXAMPLES/" rel="next" title="[ICLR2015] EXPLAINING AND HARNESSING ADVERSARIAL EXAMPLES">
+      [ICLR2015] EXPLAINING AND HARNESSING ADVERSARIAL EXAMPLES <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Abstrat"><span class="nav-number">1.</span> <span class="nav-text">Abstrat</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Introduction"><span class="nav-number">2.</span> <span class="nav-text">Introduction</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Contributions"><span class="nav-number">2.1.</span> <span class="nav-text">Contributions</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Regression-by-Confidence-Prediction"><span class="nav-number">3.</span> <span class="nav-text">Regression by Confidence Prediction</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#General-Formulation"><span class="nav-number">3.1.</span> <span class="nav-text">General Formulation</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#In-Visual-Tracking"><span class="nav-number">3.2.</span> <span class="nav-text">In Visual Tracking</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Method"><span class="nav-number">4.</span> <span class="nav-text">Method</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Representation"><span class="nav-number">4.1.</span> <span class="nav-text">Representation</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Label-Uncertainty-and-Learning-Objective"><span class="nav-number">4.2.</span> <span class="nav-text">Label Uncertainty and Learning Objective</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">zhbli</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">119</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">46</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zhbli</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+</body>
+</html>
