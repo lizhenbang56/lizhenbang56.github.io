@@ -203,6 +203,87 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/08/15/ICASSP2020-Hijacking-Tracker-A-Powerful-Adversarial-Attack-on-Visual-Tracking/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="zhbli">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="zhbli">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/08/15/ICASSP2020-Hijacking-Tracker-A-Powerful-Adversarial-Attack-on-Visual-Tracking/" class="post-title-link" itemprop="url">[ICASSP2020] Hijacking Tracker: A Powerful Adversarial Attack on Visual Tracking</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2020-08-15 15:16:47 / Modified: 15:51:48" itemprop="dateCreated datePublished" datetime="2020-08-15T15:16:47+08:00">2020-08-15</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Tracking/" itemprop="url" rel="index"><span itemprop="name">Tracking</span></a>
+                </span>
+                  , 
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Tracking/Adversarial-Attack/" itemprop="url" rel="index"><span itemprop="name">Adversarial Attack</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="ATTACK-METHODOLOGY"><a href="#ATTACK-METHODOLOGY" class="headerlink" title="ATTACK METHODOLOGY"></a>ATTACK METHODOLOGY</h2><p>给定一个视频序列，我们的目的是将一个边框从真实目标位置劫持到错误位置$D(L_d,S_d)$。通过向视频帧中添加不起眼的扰动实现这一点。$L_d$ 表示D的位置，$S_d$表示D的形状。</p>
+<p>具体来说，对于一个视频序列，设置劫持方向向量$\vec d$（指向$L_d$），和形状改变向量$\vec s$（指向$S_d$）。</p>
+<h3 id="Loss-Functions"><a href="#Loss-Functions" class="headerlink" title="Loss Functions"></a>Loss Functions</h3><p>对抗损失包括两部分：location loss 和 shape loss。具体来说，定义具有T个候选框的搜索区域为x。希望获得对抗扰动 $\Delta x$，使得预测框沿$\vec d$发生位置偏移，沿$\vec s$ 发生形状收缩。我们首先对T个候选框排序。然后，我们收集排名前5的confidence indexes set$I_c$，满足$\vec d$的top 5 location indexes set $I_{loc}$，满足$\vec s$的top 5 shape indexes set $I_{shape}$。</p>
+<p>location loss 定义为：</p>
+<img src="https://i.loli.net/2020/08/15/6LDyl948UBorRq5.png" alt="image-20200815154036766" style="zoom:50%;" />
+
+<p>$S(\cdot)$ 表示 confidence score。上述公式的含义是，加了扰动后，具有错误位置的边框的得分高于真实目标框的得分。</p>
+<img src="https://i.loli.net/2020/08/15/JGc7pt9IATULYPu.png" alt="image-20200815154410627" style="zoom:50%;" />
+
+<p>上述公式的含义是，加了扰动后，具有错误形状的边框的得分高于真实目标框的得分。</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/08/15/ECCV2020-SPARK-Spatial-aware-Online-Incremental-Attack-Against-Visual-Tracking/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1110,132 +1191,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/07/19/ICCV2017-Coherent-Online-Video-Style-Transfer/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="zhbli">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="zhbli">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/07/19/ICCV2017-Coherent-Online-Video-Style-Transfer/" class="post-title-link" itemprop="url">[ICCV2017] Coherent Online Video Style Transfer</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-              
-
-              <time title="Created: 2020-07-19 11:12:59 / Modified: 15:44:32" itemprop="dateCreated datePublished" datetime="2020-07-19T11:12:59+08:00">2020-07-19</time>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="Abstract"><a href="#Abstract" class="headerlink" title="Abstract"></a>Abstract</h2><p>现有算法的问题：虽然图像的风格迁移任务取得了成功，但是处理视频时，结果会闪烁。</p>
-<p>本文的解决方案：第一个提出了用于在线视频风格迁移的<strong>端到端</strong>网络，可生成连贯的视频（<code>temporally coherent</code>）。</p>
-<p>算法具有两个关键的思想：</p>
-<ol>
-<li>合并短期一致性</li>
-<li>将短期一致性传播为长期一致性</li>
-</ol>
-<h2 id="Method"><a href="#Method" class="headerlink" title="Method"></a>Method</h2><h3 id="Motivation"><a href="#Motivation" class="headerlink" title="Motivation"></a>Motivation</h3><p>直觉是将风格化的结果从前一帧 warp 到当前帧，并自适应地将两者融合到一起。换句话说，前一帧的某些可追踪（traceable）的点/区域保持不变，而某些不可追踪的点/区域使用当前帧的新结果。这一策略具有两种作用：</p>
-<ol>
-<li>确保运动路径上的风格化结果尽可能稳定。</li>
-<li>避免了因遮挡或运动不连续而产生的伪影。</li>
-</ol>
-<p>上述策略仅保留了短期一致性。我们需要将短期一致性进行传播，以获得长期一致性。在 $t-1$ 时刻，获得了组合特征图 $F^o_{t-1}$，该特征图受两帧一致性（ two-frame consistency）约束。在时刻 $t$，我们重新利用 $F^o_{t-1}$。这样，我们的网络每次只需要考虑两帧，但是仍然可以达到长期一致性。</p>
-<h3 id="Network-Architecture"><a href="#Network-Architecture" class="headerlink" title="Network Architecture"></a>Network Architecture</h3><p>给定输入视频 ${I_t|t=1…n}$，任务是获得风格化的视频 ${O_t|t=1…n}$。对于第一帧 $I_1$，使用现有的风格化网络 $Net_0$ 产生风格化结果。同时生成 encoded features $F_1$，在处理第二帧时，$F_1$ 是我们提出的网络 $Net_1$ 的输入。从第二帧开始，使用 $Net_1$ 而不是 $Net_0$ 进行风格化迁移。</p>
-<p>本文提出的 $Net_1$ 可保持相邻两帧的一致性，包含三个组件：</p>
-<ol>
-<li>Style Sub-network</li>
-<li>Flow Sub-network</li>
-<li>Mask Sub-network</li>
-</ol>
-<img src="https://i.loli.net/2020/07/19/7bLORjPkiBnwVHQ.png" alt="image-20200719144729983" style="zoom:50%;" />
-
-<h4 id="Style-Sub-network"><a href="#Style-Sub-network" class="headerlink" title="Style Sub-network"></a>Style Sub-network</h4><p>使用 [23] 作为默认的风格子网。</p>
-<blockquote>
-<p>[23] J. Johnson, A. Alahi, and L. Fei-Fei. <strong>Perceptual losses for real-time style transfer and super-resolution</strong>. arXiv preprint arXiv:1603.08155, 2016.</p>
-</blockquote>
-<h4 id="Flow-Sub-network"><a href="#Flow-Sub-network" class="headerlink" title="Flow Sub-network"></a>Flow Sub-network</h4><p>使用 flownet [15] 作为默认的 flow 子网。</p>
-<blockquote>
-<p>[15] P. Fischer, A. Dosovitskiy, E. Ilg, P. Hausser, C. Hazırbas¸, ¨ V. Golkov, P. van der Smagt, D. Cremers, and T. Brox. <strong>Flownet: Learning optical flow with convolutional networks</strong>. arXiv preprint arXiv:1504.06852, 2015.</p>
-</blockquote>
-<p>两个相邻帧 $I_{t-1}, I_t$ 首先编码为特征 $F_{t-1}, F_t$。$W_t$ 是由 flow 子网生成的 feature flow，并缩放到 $F_{t-1}$ 的尺寸。由于 $W_t$ 的值通常是小数，我们通过双线性插值将 $F_{t-1}$ warp 到 $F_t’$：</p>
-<img src="https://i.loli.net/2020/07/19/WTtw2NpjSZVHfJ7.png" alt="image-20200719150021593" style="zoom: 50%;" />
-
-<p>其中 $\mathcal W_{t-1}^t(\cdot)$ 是利用 $W_t$ 将特征从 $t-1$ warp 到 $t$ 的函数，即：</p>
-<img src="https://i.loli.net/2020/07/19/KJXQN7mnIfSCuyR.png" alt="image-20200719150349757" style="zoom:50%;" />
-
-<h4 id="Mask-Sub-network"><a href="#Mask-Sub-network" class="headerlink" title="Mask Sub-network"></a>Mask Sub-network</h4><p>给定 warped feature $F’_t$ 和 original feature $F_t$，mask 子网用于回归 composition mask $M$，$M$ 用于组合 $F’_t$ 和 $F_t$。$M$ 的值介于 0 到 1 之间。对于可跟踪的点/区域，mask 的值为 1，表示应该利用 $F’_t$ 以保持连贯性。否则 mask 的值为 0，以利用 $F_t$。</p>
-<p>Mask 子网由三个卷积层构成，步长为 1。输入是两个特征图的绝对插值：</p>
-<img src="https://i.loli.net/2020/07/19/7SGAfxJQoVzvwXl.png" alt="image-20200719150957201" style="zoom:50%;" />
-
-<p>说明：差异大，表示属于不可跟踪点，尽量利用当前帧特征。差异小，表示属于可跟踪点，尽量利用上一帧特征。</p>
-<p>输出是单通道 mask $M$。通过线性插值获得 composite features $F^o_t$：</p>
-<img src="https://i.loli.net/2020/07/19/pPZuXkHlM8AGgQi.png" alt="image-20200719151147462" style="zoom:50%;" />
-
-<h4 id="Summary-of-Net-1"><a href="#Summary-of-Net-1" class="headerlink" title="Summary of $Net_1$"></a>Summary of $Net_1$</h4><p>给定两个输入帧 $I_{t-1}$ 和 $I_t$，送入<strong>参数固定</strong>的风格子网的<strong>编码器</strong>中，得到特征图 $F_{t-1}, F_t$。</p>
-<p>在另一个分支中，$I_{t−1}, I_t$ 送入 flow 子网生成 feature flow $W_t$，把特征 $F_{t-1}$ warp 成 $F’_t$。</p>
-<p>接下来计算 $\Delta F$ 并送入 mask 子网得到 $M$，利用 $M$ 得到 $F^o_t$。</p>
-<p>最后，将 $F^o_t$ 送入风格子网的<strong>解码器</strong>中，得到第 $t$ 帧的风格化结果。</p>
-<h3 id="The-Loss-Function"><a href="#The-Loss-Function" class="headerlink" title="The Loss Function"></a>The Loss Function</h3><p>为了训练 flow 和 mask 子网，损失包含 3 项：</p>
-<ol>
-<li>coherence term</li>
-<li>occlusion term</li>
-<li>flow term</li>
-</ol>
-<p>Coherence term 惩罚两个连续帧的风格化结果的不一致性：</p>
-<img src="https://i.loli.net/2020/07/19/mfoTYJXZkrcpbC6.png" alt="image-20200719152823661" style="zoom:50%;" />
-
-<p>$S_{t-1}$ 是 $t-1$ 帧独立计算的风格化结果。</p>
-<p>Warping function $W^t_{t−1}(\cdot)$ 使用 ground-truth flow。</p>
-<p>$M_g$ 是 ground-truth mask。</p>
-<p>该损失鼓励 $O_t$ 和 $S_t$ 在可跟踪点/区域上的风格化结果保持一致。</p>
-<p>相反，对于不可跟踪区域，occlusion loss 迫使 $O_t$ 和 $S_t$ 保持一致：</p>
-<img src="https://i.loli.net/2020/07/19/gVlYxQOtH6uJX3T.png" alt="image-20200719153650486" style="zoom:50%;" />
-
-<p>另外，还要约束 feature flow：</p>
-<img src="https://i.loli.net/2020/07/19/7dNgFB2lLRWyEDu.png" alt="image-20200719153856140" style="zoom:50%;" />
-
-<p>其中 $W^g_t \downarrow$ 表示将 ground-truth optical flow 下采样到与 $W_t$ 尺寸相同。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1305,7 +1260,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">118</span>
+          <span class="site-state-item-count">119</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

@@ -203,6 +203,92 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/08/20/IJCAI2019-Transferable-adversarial-attacks-for-image-and-video-object-detection/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="zhbli">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="zhbli">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/08/20/IJCAI2019-Transferable-adversarial-attacks-for-image-and-video-object-detection/" class="post-title-link" itemprop="url">[IJCAI2019] Transferable adversarial attacks for image and video object detection</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-08-20 17:06:18" itemprop="dateCreated datePublished" datetime="2020-08-20T17:06:18+08:00">2020-08-20</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-08-21 11:27:24" itemprop="dateModified" datetime="2020-08-21T11:27:24+08:00">2020-08-21</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <img src="https://i.loli.net/2020/08/21/csU5w1u8gdG26zP.png" alt="image-20200821105203742" style="zoom:50%;" />
+
+<h2 id="Methodology"><a href="#Methodology" class="headerlink" title="Methodology"></a>Methodology</h2><h3 id="Problem-Definition"><a href="#Problem-Definition" class="headerlink" title="Problem Definition"></a>Problem Definition</h3><p>给定图像I，目的是生成对抗图像$\hat I$，以攻击检测器Dt。对于图像中的ground truth object $(B_i,C_i)$, $B_i$是边框，$C_i$是标签。</p>
+<p>假设检测器成功检测到该目标并输出$(b_i,c_i)$，其中$B_i$和 $b_i$的IoU大于0.5，而且$C_i=c_i$。</p>
+<p>定义$(\hat b_i,\hat c_i)$为该对象在$\hat I$上的检测结果。如果$\hat b_i$和$B_i$的IoU小于0.5，或者$\hat c_i\ne C_i$，就认为攻击成功。</p>
+<h3 id="Unified-and-Efficient-Adversary"><a href="#Unified-and-Efficient-Adversary" class="headerlink" title="Unified and Efficient Adversary"></a>Unified and Efficient Adversary</h3><p>条件GAN的目标函数为：</p>
+<img src="https://i.loli.net/2020/08/20/CZvWtjqVUyA5H3G.png" alt="image-20200820194105289" style="zoom:50%;" />
+
+<p>G用于生成对抗样本，D区分对抗/干净样本。</p>
+<h3 id="Network-Architecture"><a href="#Network-Architecture" class="headerlink" title="Network Architecture"></a>Network Architecture</h3><p>pix2pix</p>
+<h3 id="Loss-Functions"><a href="#Loss-Functions" class="headerlink" title="Loss Functions"></a>Loss Functions</h3><p>分类损失：</p>
+<img src="https://i.loli.net/2020/08/20/NOJtQ8a2Dfoy1wY.png" alt="image-20200820194705620" style="zoom:50%;" />
+
+<p>X是检测器在图像I上提取的特征图，$\tau={t_1,t_2,…,t_N}$是X上所有候选区域的集合。$t_n$是来自RPN的第n的候选区域。$l_n$是$t_n$的真实标签，$\hat l_n$是错误标签，从其他类中随机选择。$f_{l_n}(X,t_n)\in R^C$是候选区域$t_n$的分类得分向量（softmax之前）。实验时，选择得分大于0.7的候选框，以构成$\tau$。</p>
+<p>本文还提出了 multi-scale attention feature loss：</p>
+<img src="https://i.loli.net/2020/08/20/HOAjx5e8hMZPuzK.png" alt="image-20200820195745848" style="zoom:50%;" />
+
+<p>$X_m$是第m层的特征图。$R_m$是一个随机的、固定的特征图。$A_m$是attention weight。</p>
+<p>用 $s_n$ 表示 $t_n$ 的得分。</p>
+<p>总损失为：</p>
+<img src="https://i.loli.net/2020/08/20/jvkEygSJTm7wLFf.png" alt="image-20200820204209507" style="zoom:50%;" />
+
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/08/20/arXiv1902-Daedalus-Breaking-non-maximum-suppression-in-object-detection-via-adversarial-examples/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -863,87 +949,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/08/15/ICASSP2020-Hijacking-Tracker-A-Powerful-Adversarial-Attack-on-Visual-Tracking/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="zhbli">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="zhbli">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/08/15/ICASSP2020-Hijacking-Tracker-A-Powerful-Adversarial-Attack-on-Visual-Tracking/" class="post-title-link" itemprop="url">[ICASSP2020] Hijacking Tracker: A Powerful Adversarial Attack on Visual Tracking</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-              
-
-              <time title="Created: 2020-08-15 15:16:47 / Modified: 15:51:48" itemprop="dateCreated datePublished" datetime="2020-08-15T15:16:47+08:00">2020-08-15</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Tracking/" itemprop="url" rel="index"><span itemprop="name">Tracking</span></a>
-                </span>
-                  , 
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Tracking/Adversarial-Attack/" itemprop="url" rel="index"><span itemprop="name">Adversarial Attack</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="ATTACK-METHODOLOGY"><a href="#ATTACK-METHODOLOGY" class="headerlink" title="ATTACK METHODOLOGY"></a>ATTACK METHODOLOGY</h2><p>给定一个视频序列，我们的目的是将一个边框从真实目标位置劫持到错误位置$D(L_d,S_d)$。通过向视频帧中添加不起眼的扰动实现这一点。$L_d$ 表示D的位置，$S_d$表示D的形状。</p>
-<p>具体来说，对于一个视频序列，设置劫持方向向量$\vec d$（指向$L_d$），和形状改变向量$\vec s$（指向$S_d$）。</p>
-<h3 id="Loss-Functions"><a href="#Loss-Functions" class="headerlink" title="Loss Functions"></a>Loss Functions</h3><p>对抗损失包括两部分：location loss 和 shape loss。具体来说，定义具有T个候选框的搜索区域为x。希望获得对抗扰动 $\Delta x$，使得预测框沿$\vec d$发生位置偏移，沿$\vec s$ 发生形状收缩。我们首先对T个候选框排序。然后，我们收集排名前5的confidence indexes set$I_c$，满足$\vec d$的top 5 location indexes set $I_{loc}$，满足$\vec s$的top 5 shape indexes set $I_{shape}$。</p>
-<p>location loss 定义为：</p>
-<img src="https://i.loli.net/2020/08/15/6LDyl948UBorRq5.png" alt="image-20200815154036766" style="zoom:50%;" />
-
-<p>$S(\cdot)$ 表示 confidence score。上述公式的含义是，加了扰动后，具有错误位置的边框的得分高于真实目标框的得分。</p>
-<img src="https://i.loli.net/2020/08/15/JGc7pt9IATULYPu.png" alt="image-20200815154410627" style="zoom:50%;" />
-
-<p>上述公式的含义是，加了扰动后，具有错误形状的边框的得分高于真实目标框的得分。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1013,7 +1018,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">118</span>
+          <span class="site-state-item-count">119</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

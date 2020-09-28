@@ -203,6 +203,111 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/05/02/ECCV2018-Triplet-Loss-in-Siamese-Network-for-Object-Tracking/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="zhbli">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="zhbli">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/05/02/ECCV2018-Triplet-Loss-in-Siamese-Network-for-Object-Tracking/" class="post-title-link" itemprop="url">[ECCV2018] Triplet Loss in Siamese Network for Object Tracking</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-05-02 10:27:50" itemprop="dateCreated datePublished" datetime="2020-05-02T10:27:50+08:00">2020-05-02</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-05-13 18:28:26" itemprop="dateModified" datetime="2020-05-13T18:28:26+08:00">2020-05-13</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Tracking/" itemprop="url" rel="index"><span itemprop="name">Tracking</span></a>
+                </span>
+                  , 
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Tracking/Loss/" itemprop="url" rel="index"><span itemprop="name">Loss</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="Abstract"><a href="#Abstract" class="headerlink" title="Abstract"></a>Abstract</h2><p>现有跟踪算法的问题：孪生网络仅用了样本的成对关系，忽略了三元组关系。</p>
+<p>本文的解决方案：将 triplet loss 应用到 3 个孪生跟踪器（SiamFC、CFnet2 和 SiamImp），验证了有效性。</p>
+<p>性能：</p>
+<ul>
+<li><p><a target="_blank" rel="noopener" href="https://github.com/shenjianbing/TripletTracking">https://github.com/shenjianbing/TripletTracking</a></p>
+</li>
+<li><p>在 3 个数据集上进行实验： OTB-2013，OTB-100 和 VOT-2017。</p>
+</li>
+</ul>
+<h2 id="Siamese-network-with-triplet-loss"><a href="#Siamese-network-with-triplet-loss" class="headerlink" title="Siamese network with triplet loss"></a>Siamese network with triplet loss</h2><p>可以将 SiamFC 中的  instances set（即 instance input）$\mathcal X$ 拆分成 positive instances set $\mathcal X_p$ 和 negative instances set $\mathcal X_n$。</p>
+<p>类似地，将  exemplar-instance pairs 的 similarity score set $V$ 划分成 positive score set $\mathcal V_p$ 和 negative score set $\mathcal V_n$。</p>
+<img src="https://i.loli.net/2020/05/02/3U51STD7iB9tC8w.png" alt="image-20200502104928802" style="zoom:50%;" />
+
+<p>其中 $vp$ 表示 exemplar-positive pair 的 similarity score，$vn$ 表示 exemplar-negative pair 的 similarity score。</p>
+<p>本文提出的 triplet loss 定义如下：</p>
+<img src="https://i.loli.net/2020/05/02/t9Hm4VrbXUyxWDQ.png" alt="image-20200502104953478" style="zoom:50%;" />
+
+<h2 id="Relationship-between-logistic-loss-and-triplet-loss"><a href="#Relationship-between-logistic-loss-and-triplet-loss" class="headerlink" title="Relationship between logistic loss and triplet loss"></a>Relationship between logistic loss and triplet loss</h2><p>两种损失的区别为：</p>
+<img src="https://i.loli.net/2020/05/02/2OVcmUKo9xTAQb4.png" alt="image-20200502105951152" style="zoom:50%;" />
+
+<h3 id="Comparison-on-the-gradients"><a href="#Comparison-on-the-gradients" class="headerlink" title="Comparison on the gradients"></a>Comparison on the gradients</h3><p>对于 logistic loss，梯度为：</p>
+<img src="https://i.loli.net/2020/05/02/L3fa4WvtgDCXRu5.png" alt="image-20200502110138148" style="zoom:50%;" />
+
+<p>对于 triplet loss，梯度为：</p>
+<img src="https://i.loli.net/2020/05/02/AWtNxcUeI8kudYo.png" alt="image-20200502110212416" style="zoom:50%;" />
+
+<p>这意味着 logistic term 不能充分利用 $vp$ 和 $vn$ 提供的信息。<br>换句话说，$\partial T_l/\partial v_p$ 无法利用来自 $vn$ 的信息，$\partial T_l/\partial v_n$ 无法利用 $vp$ 的信息。</p>
+<h2 id="Experimental-results"><a href="#Experimental-results" class="headerlink" title="Experimental results"></a>Experimental results</h2><h3 id="Experiments-on-baseline-trackers"><a href="#Experiments-on-baseline-trackers" class="headerlink" title="Experiments on baseline trackers"></a>Experiments on baseline trackers</h3><p>对三种变体进行对比实验：SiamFC，SiamFC-init，SiamFC-tri。其中 SiamFC-tri 指 在 SiamFC 基础上加了 triplet loss 后继续训练，siamFC-init 指仍使用原始损失继续训练。</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/05/02/CVPR2020-A-Disentangling-Invertible-Interpretation-Network-for-Explaining-Latent-Representations/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1084,11 +1189,11 @@
                 </span>
                   , 
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Tracking/Template-Update/" itemprop="url" rel="index"><span itemprop="name">Template Update</span></a>
+                  <a href="/categories/Tracking/Model-Update/" itemprop="url" rel="index"><span itemprop="name">Model Update</span></a>
                 </span>
                   , 
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Tracking/Model-Update/" itemprop="url" rel="index"><span itemprop="name">Model Update</span></a>
+                  <a href="/categories/Tracking/Template-Update/" itemprop="url" rel="index"><span itemprop="name">Template Update</span></a>
                 </span>
             </span>
 
@@ -1185,102 +1290,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/04/24/AAAI2020-SiamFC-Towards-Robust-and-Accurate-Visual-Tracking-with-Target-Estimation-Guidelines/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="zhbli">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="zhbli">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/04/24/AAAI2020-SiamFC-Towards-Robust-and-Accurate-Visual-Tracking-with-Target-Estimation-Guidelines/" class="post-title-link" itemprop="url">[AAAI2020] SiamFC++: Towards Robust and Accurate Visual Tracking with Target Estimation Guidelines</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2020-04-24 12:27:02" itemprop="dateCreated datePublished" datetime="2020-04-24T12:27:02+08:00">2020-04-24</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-05-13 20:40:52" itemprop="dateModified" datetime="2020-05-13T20:40:52+08:00">2020-05-13</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Tracking/" itemprop="url" rel="index"><span itemprop="name">Tracking</span></a>
-                </span>
-                  , 
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Tracking/Architecture/" itemprop="url" rel="index"><span itemprop="name">Architecture</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>作者提出 4 条设计准则：</p>
-<ul>
-<li>decomposition of classification and state estimation。</li>
-<li>classification score without ambiguity：在每个位置预测 1 个分类得分，并在该位置进行回归。<ul>
-<li>基于 anchor 的机制为什么导致歧义？The anchor-based counterparts which consider the location on the input image as the center of multiple anchor boxes, output <strong>multiple classification score at the same location</strong> and regress the target bounding box with respect to these anchor boxes, leading to <strong>ambiguous</strong> matching between anchor and object. 同一个位置预测多个分类得分，这不好。</li>
-</ul>
-</li>
-<li>tracking without prior knowledge：anchor 机制引入了先验，这是不好的。因此本文不基于 anchor 进行回归，而是直接进行回归。<ul>
-<li>为什么 anchor 机制引入了先验？因为 anchor 指定了目标的尺度和长宽比。</li>
-</ul>
-</li>
-<li>estimation quality score 质量得分：直接使用分类得分未必好。需要设计与分类得分无关的质量得分，作用是对预测的边框的质量进行打分。也就是说，对于一个位置，不仅能预测该位置有无目标，还能<strong>预测</strong>在该位置处的<strong>预测</strong>的边框质量。(<strong>predict</strong> the IoU score between <strong>predicted</strong> boxes and ground-truth boxes similar)</li>
-</ul>
-<p><img src="https://i.loli.net/2020/04/24/UqsEAreTQHgxkz8.png" alt="image-20200320203024927"></p>
-<p>损失函数：</p>
-<img src="https://i.loli.net/2020/04/24/zjLS4EfopyeaZ8W.png" alt="image-20200424123222296" style="zoom:50%;" />
-
-<p>其中，$L_{cls}$ 是 focal loss，$L_{quality}$ 是用于 quality assessment 的 binary cross entropy (BCE) loss，$L_{reg}$ 是 IoU loss。注意，仅为正样本计算 $L_{quality}$ 和 $L_{reg}$。</p>
-<p>本文中，使用 Prior Spatial Score (PSS) 计算 quality assessment：</p>
-<img src="https://i.loli.net/2020/04/24/t9jlfEwTJnCBdQL.png" alt="image-20200424123921051" style="zoom:50%;" />
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1350,7 +1359,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">118</span>
+          <span class="site-state-item-count">119</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

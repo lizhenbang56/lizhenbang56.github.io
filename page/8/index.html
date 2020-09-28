@@ -203,6 +203,78 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/05/09/CVPR2020-Scale-Equalizing-Pyramid-Convolution-for-Object-Detection/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="zhbli">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="zhbli">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/05/09/CVPR2020-Scale-Equalizing-Pyramid-Convolution-for-Object-Detection/" class="post-title-link" itemprop="url">[CVPR2020] Scale-Equalizing Pyramid Convolution for Object Detection</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2020-05-09 13:21:40 / Modified: 13:34:46" itemprop="dateCreated datePublished" datetime="2020-05-09T13:21:40+08:00">2020-05-09</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="Abstract"><a href="#Abstract" class="headerlink" title="Abstract"></a>Abstract</h2><p>Feature pyramid 已经成为提取不同尺度特征的有效方法。该方法可以聚集不同 levels 的上下文信息，但很少涉及特征金字塔中的 inter-level correlation。</p>
+<p>早期的计算机视觉方法通过在空间和尺度维度上定位 feature extrema 以提取 scale-invariant features。</p>
+<p>受此启发，本文提出跨 pyramid level 的卷积，称为 pyramid convolution，这是一种改进的 3D 卷积。</p>
+<p>Stacked pyramid convolutions 可以直接提取 3D（scale 和 spatial）特征，并胜过其他精心设计的特征融合模块。</p>
+<p>基于 3D 卷积的观点，在 pyramid convolution 之后插入一个 integrated batch normalization，用于从整个特征金字塔中收集统计信息。</p>
+<p>性能：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://github.com/jshilong/SEPC">https://github.com/jshilong/SEPC</a></li>
+</ul>
+<img src="https://i.loli.net/2020/05/09/i4hOgC5yXvqpLIc.png" alt="image-20200509133412684" style="zoom:50%;" />
+
+<blockquote>
+<p>Performance on COCO-minival dataset of pyramid convolution in various single-stage detectors including RetinaNet [20], FCOS [38], FSAF [48], Reppoints [44], FreeAnchor [46]. Reference points of two-stage detectors such as Faster R-CNN (Faster) [31], Libra Faster R-CNN (L-Faster) [29], Cascade Faster R-CNN (C-Faster) [1] and Deformable Faster R-CNN (D-Faster) [49] are also provided. All models adopt ResNet-50 backbone and use the 1x training strategy.</p>
+</blockquote>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/05/09/ICLR2020-MUTUAL-INFORMATION-GRADIENT-ESTIMATION-FOR-REPRESENTATION-LEARNING/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -943,135 +1015,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/05/06/arXiv2005-How-to-Train-Your-Energy-Based-Model-for-Regression/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="zhbli">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="zhbli">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/05/06/arXiv2005-How-to-Train-Your-Energy-Based-Model-for-Regression/" class="post-title-link" itemprop="url">[arXiv2005] How to Train Your Energy-Based Model for Regression</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2020-05-06 15:58:43" itemprop="dateCreated datePublished" datetime="2020-05-06T15:58:43+08:00">2020-05-06</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-05-13 18:27:26" itemprop="dateModified" datetime="2020-05-13T18:27:26+08:00">2020-05-13</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Tracking/" itemprop="url" rel="index"><span itemprop="name">Tracking</span></a>
-                </span>
-                  , 
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Tracking/Loss/" itemprop="url" rel="index"><span itemprop="name">Loss</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="Abstract"><a href="#Abstract" class="headerlink" title="Abstract"></a>Abstract</h2><p><code>Energy-based models</code> (EBMs) 在计算机视觉中越来越流行。尽管常用于 generative image modeling，但最近的工作将 EBMs 用于回归任务，并在目标检测和目标跟踪中达到了最好的性能。然而，训练 EBMs 具有挑战性。尽管已经探索了不同的技术来进行 generative modeling，将 EBM 应用于回归不是一个充分研究的问题，因此尚不清楚如何训练 EBMs 以获得最佳的回归性能。本文首次对该问题进行详细研究。</p>
-<p>本文提出 noise contrastive estimation 的扩展方法，并与六个 1D 回归/目标检测方法进行了性能比较。比较结果表明，本文提出的训练方法最好。</p>
-<p>性能：</p>
-<ul>
-<li><p><a target="_blank" rel="noopener" href="https://github.com/fregu856/ebms_regression">https://github.com/fregu856/ebms_regression</a></p>
-</li>
-<li><p>LaSOT_AUC：63.7%。</p>
-</li>
-<li><p>TrackingNet_Success：78.7%。</p>
-</li>
-</ul>
-<h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><p>EBMs 通过参数化 scalar function $f_\theta(x)$ 来执行概率密度：</p>
-<img src="https://i.loli.net/2020/05/06/gPLJZYyFAuiQX4d.png" alt="image-20200506162716258" style="zoom:50%;" />
-
-<p>最近的工作探索了 conditional EBMs 用于回归的一般公式，在目标检测和目标跟踪上表现出色。</p>
-<p>给定观测到的 input-target pairs，回归需要从 input $x$ 预测 continuous target $y$。</p>
-<p>在 [15, 9] 中，通过学习 conditional EBM $p(y|x;\theta)$，在给定 input $x$ 的情况下捕获 target value $y$ 的分布，解决了这一问题。测试时，使用梯度上升最大化 $p(y|x;\theta)$ w.r.t. $y$，产生准确的预测。</p>
-<blockquote>
-<p>[15] Fredrik K Gustafsson, Martin Danelljan, Goutam Bhat, and Thomas B Sch¨on. <strong>Learning deep conditional target densities for accurate regression</strong>. arXiv preprint arXiv:1909.12297, 2019.</p>
-<p>[9] Martin Danelljan, Luc Van Gool, and Radu Timofte. <strong>Probabilistic regression for visual tracking</strong>. In The IEEE Conference on Computer Vision and Pattern Recognition (CVPR), June 2020.</p>
-</blockquote>
-<p>本文详细研究使用 EBMs 进行回归，以进一步提高性能。</p>
-<p>EBMs 的训练具有挑战性，因为计算 $p(x;\theta)$ 设计棘手的积分，这使得使用  standard maximum likelihood (ML) 的学习变得复杂。虽然在 generative modeling 中探索了多种技术，包括 alternative estimation methods 和 approximations based on Markov chain Monte Carlo (MCMC)。但是，EMBs 在回归中的应用并未深入研究。[15, 9] 都将  Monte Carlo importance sampling 应用于近似 intractable integrals，这种方法在数据维数方面很难扩展。因此，如何训练 EMSs $p(y|x;\theta)$ 以在计算机视觉的回归任务上获得最佳性能，是本文研究的内容。</p>
-<p>本文的贡献是：提出了一种 noise contrastive estimation (NCE) 的扩展，以训练用于回归任务的 EBMs。本文提出的 NCE+ 可以理解为 NCE 的直接推广，考虑了真实数据集注释过程中的噪声。</p>
-<p>本文将 NCE+ 应用于目标跟踪任务，取得了良好的性能。</p>
-<h2 id="Energy-Based-Models-for-Regression"><a href="#Energy-Based-Models-for-Regression" class="headerlink" title="Energy-Based Models for Regression"></a>Energy-Based Models for Regression</h2><h3 id="Problem-amp-Model-Definition"><a href="#Problem-amp-Model-Definition" class="headerlink" title="Problem &amp; Model Definition"></a>Problem &amp; Model Definition</h3><p>在有监督回归问题中，定义 $\mathcal D$ 为独立同分布的 input-target pairs，$\mathcal D = {(x_i,y_i)}^N_{i=1}, (x_i,y_i) \sim p(x,y)$。给定输入 $x^<em>\in \mathcal X$，任务是学习如何预测 target $y^</em>\in \mathcal Y$。Target Space $\mathcal Y$ 是连续的，当 $K\ge1$ 时，$\mathcal Y\in\mathbb R^K$。输入空间 $\mathcal X$ 通常对应于图像空间。</p>
-<p>与 [15, 9] 一样，我们通过创建 conditional target density $p(y|x)$ 的 <code>energy-based model</code> $p(y|x;\theta)$ 来解决这一问题。为此，本文使用模型参数 $\theta\in \mathbb R^P$ 来指定 DNN $f_\theta:\mathcal X\times\mathcal Y\rightarrow \mathbb R$。该 DNN 直接映射任何 input-target pair $(x,y)\in\mathcal X\times\mathcal Y$ 到 标量 $f_\theta(x,y)\in \mathbb R$。Conditional target density 的模型 $p(y|x;\theta)$ 定义为（公式 1）：</p>
-<img src="https://i.loli.net/2020/05/06/sjDdXwQvE5CRimL.png" alt="image-20200506205541087" style="zoom:50%;" />
-
-<h3 id="Training"><a href="#Training" class="headerlink" title="Training"></a>Training</h3><p>为了训练 EBM $p(y|x;\theta)$ 中的 DNN $f_\theta(x,y)$，可采用不同的技术将 density $p(y|x;\theta)$ 拟合到观测数据 ${(x_i,y_i)}_{i=1}^N$。一般来说，最常用的此类技术可能是 ML learning，最小化 negative log-likelihood (NLL)：</p>
-<img src="https://i.loli.net/2020/05/06/sJnom5HPrvTE1zk.png" alt="image-20200506211357809" style="zoom:50%;" />
-
-<p>但是，公式中的积分很难处理。[15, 9] 使用 importance sampling 来近似这种 intractable integrals。</p>
-<h4 id="ML-with-Importance-Sampling-ML-IS"><a href="#ML-with-Importance-Sampling-ML-IS" class="headerlink" title="ML with Importance Sampling (ML-IS)"></a>ML with Importance Sampling (ML-IS)</h4><img src="https://i.loli.net/2020/05/06/cU8HdE5xfvRT4pu.png" alt="image-20200506212132668" style="zoom:50%;" />
-
-<p>其中，${y^{(i,m)}}^M_{m=1}$ 是从依赖于 ground truth target $y_i$ 的 proposal distribution $q(y|y_i)$ 中抽取的 $M$ 个样本。在 [15] 中，$q(y|y_i)$ 是以 $y_i$ 为中心的 $K$ 个等权重高斯的混合：</p>
-<img src="https://i.loli.net/2020/05/06/AYQsSjT3qm2cCat.png" alt="image-20200506213134796" style="zoom:50%;" />
-
-<h4 id="KL-Divergence-with-Importance-Sampling-KLD-IS"><a href="#KL-Divergence-with-Importance-Sampling-KLD-IS" class="headerlink" title="KL Divergence with Importance Sampling (KLD-IS)"></a>KL Divergence with Importance Sampling (KLD-IS)</h4><img src="https://i.loli.net/2020/05/06/UoMVzx3h5L9ceAG.png" alt="image-20200506213401747" style="zoom:50%;" />
-
-<h4 id="ML-with-MCMC-ML-MCMC"><a href="#ML-with-MCMC-ML-MCMC" class="headerlink" title="ML with MCMC (ML-MCMC)"></a>ML with MCMC (ML-MCMC)</h4><img src="https://i.loli.net/2020/05/06/F9Am5QlTqH7hyaX.png" alt="image-20200506214202806" style="zoom:50%;" />
-
-<h4 id="Noise-Contrastive-Estimation-NCE"><a href="#Noise-Contrastive-Estimation-NCE" class="headerlink" title="Noise Contrastive Estimation (NCE)"></a>Noise Contrastive Estimation (NCE)</h4><p>作为 ML learning 的替代方法，[16] 提出 NCE 来估计 unnormalized parametric models：</p>
-<img src="https://i.loli.net/2020/05/06/HStlRrVAoNb6GZw.png" alt="image-20200506214512245" style="zoom:50%;" />
-
-<h4 id="Score-Matching-SM"><a href="#Score-Matching-SM" class="headerlink" title="Score Matching (SM)"></a>Score Matching (SM)</h4><img src="https://i.loli.net/2020/05/06/Y24hxyqQpuVMASj.png" alt="image-20200506214643665" style="zoom:50%;" />
-
-<h4 id="Denoising-Score-Matching-DSM"><a href="#Denoising-Score-Matching-DSM" class="headerlink" title="Denoising Score Matching (DSM)"></a>Denoising Score Matching (DSM)</h4><img src="https://i.loli.net/2020/05/06/GVeXWRoCjZMLaFU.png" alt="image-20200506214806683" style="zoom:50%;" />
-
-<h2 id="Proposed-Training-Method"><a href="#Proposed-Training-Method" class="headerlink" title="Proposed Training Method"></a>Proposed Training Method</h2><p>本文提出了 NCE 的扩展：NCE+。</p>
-<img src="https://i.loli.net/2020/05/06/hxmLUJPj8i1kdfH.png" alt="image-20200506215145790" style="zoom:50%;" />
-
-<h2 id="Visual-Tracking-Experiments"><a href="#Visual-Tracking-Experiments" class="headerlink" title="Visual Tracking Experiments"></a>Visual Tracking Experiments</h2><img src="https://i.loli.net/2020/05/06/ge7azCrPWKuL9hj.png" alt="image-20200506215238768" style="zoom:50%;" />
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1141,7 +1084,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">118</span>
+          <span class="site-state-item-count">119</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
