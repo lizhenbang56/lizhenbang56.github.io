@@ -203,6 +203,104 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/05/11/CVPR2020-Tracking-by-Instance-Detection-A-Meta-Learning-Approach/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="zhbli">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="zhbli">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/05/11/CVPR2020-Tracking-by-Instance-Detection-A-Meta-Learning-Approach/" class="post-title-link" itemprop="url">[CVPR2020] Tracking by Instance Detection: A Meta-Learning Approach</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-05-11 18:18:13" itemprop="dateCreated datePublished" datetime="2020-05-11T18:18:13+08:00">2020-05-11</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-05-13 18:17:38" itemprop="dateModified" datetime="2020-05-13T18:17:38+08:00">2020-05-13</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Tracking/" itemprop="url" rel="index"><span itemprop="name">Tracking</span></a>
+                </span>
+                  , 
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Tracking/Meta-Learning/" itemprop="url" rel="index"><span itemprop="name">Meta-Learning</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="Abstract"><a href="#Abstract" class="headerlink" title="Abstract"></a>Abstract</h2><p>本文的核心思想是将检测器转换为跟踪器，具体做法分为三步：</p>
+<ol>
+<li>选择任一使用梯度下降法训练的目标检测器。</li>
+<li>[meta-learning] 使用 MAML 在大量跟踪序列上训练检测器。</li>
+<li>[domain adaptation] 对于新的跟踪视频，使用第一帧，通过几次梯度下降微调检测器。</li>
+</ol>
+<h2 id="Learning-an-Instance-Detector-with-MAML"><a href="#Learning-an-Instance-Detector-with-MAML" class="headerlink" title="Learning an Instance Detector with MAML"></a>Learning an Instance Detector with MAML</h2><p>将检测器转换为跟踪器的关键是进行良好的初始化，以便在只有初始帧可用时，能够快速适应新目标。</p>
+<p>给定一段视频 $V_i$，我们收集一组训练集 $\mathcal D^s_i$，在 meta learning 中称为 support set。</p>
+<p>将检测模型定义为 $h(x;\pmb\theta_0)$，其中 $x$ 是输入图像，$\pmb\theta_0$ 是检测器参数。</p>
+<p>我们在 support set 上进行 $k$ 次梯度下降来更新检测器：</p>
+<img src="https://i.loli.net/2020/05/11/gJbTad8i5rjBNQc.png" alt="image-20200511182514561" style="zoom:50%;" />
+
+<p>该过程称为 inner-level optimization。</p>
+<p>为了评估已训练的检测器的泛化性，我们从相同的视频 $V_i$ 中收集另一组样本 $\mathcal D^t_i$，称为 target set。</p>
+<p>在 target set 上计算损失：</p>
+<img src="https://i.loli.net/2020/05/11/61zbtcmYf2xHXn9.png" alt="image-20200511184949016" style="zoom:50%;" />
+
+<p>Overall training objective 是寻找对任意跟踪视频来说都良好的 initialization status $\pmb \theta_0$：</p>
+<img src="https://i.loli.net/2020/05/11/clLZf5tuyFoEMW3.png" alt="image-20200511185318302" style="zoom:50%;" />
+
+<p>该过程称为 outer-level optimization。</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/05/11/ICCV2019-Learning-Discriminative-Model-Prediction-for-Tracking/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -907,78 +1005,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/05/09/CVPR2020-Memory-Enhanced-Global-Local-Aggregation-for-Video-Object-Detection/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="zhbli">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="zhbli">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/05/09/CVPR2020-Memory-Enhanced-Global-Local-Aggregation-for-Video-Object-Detection/" class="post-title-link" itemprop="url">[CVPR2020] Memory Enhanced Global-Local Aggregation for Video Object Detection</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-              
-
-              <time title="Created: 2020-05-09 13:36:47 / Modified: 13:47:42" itemprop="dateCreated datePublished" datetime="2020-05-09T13:36:47+08:00">2020-05-09</time>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="Abstract"><a href="#Abstract" class="headerlink" title="Abstract"></a>Abstract</h2><p>人类如何识别视频中的物体？由于单帧图像质量的下降，人们可能很难进利用一幅图像的信息来识别该帧中的被遮挡目标。</p>
-<p>我们认为，人类识别视频中的目标有两个重要线索：</p>
-<ol>
-<li>global semantic information</li>
-<li>local localization information</li>
-</ol>
-<p>近来，许多方法采用自注意力机制来利用线索 1 或线索 2 增强关键帧中的特征。</p>
-<p>本文提出 memory enhanced global-local aggregation (MEGA) 网络，这是同时考虑线索 1 和线索 2 的首批方法之一。</p>
-<p>此外，借助新颖的 Long Range Memory (LRM) module，可以使关键帧访问更多内容。</p>
-<p>性能：</p>
-<ul>
-<li><a target="_blank" rel="noopener" href="https://github.com/Scalsol/mega.pytorch">https://github.com/Scalsol/mega.pytorch</a></li>
-<li>ImageNet VID validation set：mAP=85.4。</li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1048,7 +1074,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">119</span>
+          <span class="site-state-item-count">120</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

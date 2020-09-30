@@ -203,6 +203,83 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/05/02/ICLR2019-META-LEARNING-WITH-LATENT-EMBEDDING-OPTIMIZATION/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="zhbli">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="zhbli">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/05/02/ICLR2019-META-LEARNING-WITH-LATENT-EMBEDDING-OPTIMIZATION/" class="post-title-link" itemprop="url">ICLR2019 META-LEARNING WITH LATENT EMBEDDING OPTIMIZATION</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2020-05-02 13:43:49 / Modified: 15:57:52" itemprop="dateCreated datePublished" datetime="2020-05-02T13:43:49+08:00">2020-05-02</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="Abstract"><a href="#Abstract" class="headerlink" title="Abstract"></a>Abstract</h2><p>现有 meta-learning 算法的问题：由于数据量极少，而参数空间维度很高，这使得算法性能受到影响。</p>
+<p>本文的解决方案：学习 data-dependent latent generative representation。提出 latent embedding optimization (LEO)，将基于梯度的自适应过程与模型参数的高维空间解耦。</p>
+<h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><p>基于优化的元学习方法旨在找到一组模型参数，可以通过几步梯度下降来适应一个任务。</p>
+<p>但是，仅使用几个样本类计算高位参数空间中的梯度会导致泛化困难。</p>
+<p>本文提出 LEO，学习模型参数的低维潜在嵌入，并在此空间中执行基于优化的元学习。</p>
+<h2 id="MODEL"><a href="#MODEL" class="headerlink" title="MODEL"></a>MODEL</h2><h3 id="PROBLEM-DEFINITION"><a href="#PROBLEM-DEFINITION" class="headerlink" title="PROBLEM DEFINITION"></a>PROBLEM DEFINITION</h3><p>每个 task instance $\mathcal T_i$ 是采样自  task distribution $p(\mathcal T)$ 的分类问题。任务划分 a training meta-set $\mathcal S^{tr}$ , validation meta-set $S^{val}$ 和 test meta-set $S^{test}$。每个 task instance $\mathcal T_i$ 由 training set $\mathcal D^{tr}$ 和 validation set $\mathcal D^{val}$ 组成。训练集2 $\mathcal D^{tr} = {(\mathbf x^k_n, y^k_n)|k=1…K;n=1…N}$。验证集包含相同类别的其他样本。</p>
+<h3 id="MODEL-AGNOSTIC-META-LEARNING"><a href="#MODEL-AGNOSTIC-META-LEARNING" class="headerlink" title="MODEL-AGNOSTIC META-LEARNING"></a>MODEL-AGNOSTIC META-LEARNING</h3><p>MAML 是与本文相关的方法。对于一个模型 $f_\theta$，目的是找到参数 $\theta$，经过几次优化便可适应采样自同一 <code>distribution</code> 的 <code>task</code>。通过可微分的函数，将参数调整为  task-specific model parameters $θ’_i$，通常的更新方式为（公式 1）：</p>
+<img src="https://i.loli.net/2020/05/02/MJaUvfgWGdsZmjN.png" alt="image-20200502143727821" style="zoom:50%;" />
+
+<p>其中，$\mathcal G$ 通常是在 few-shot training set $\mathcal D^{tr}$ 上执行一次梯度下降：$\theta’_i=\theta-\alpha \nabla_\theta\mathcal L^{tr}_{\mathcal T_i}(f_\theta)$。</p>
+<p>在 meta-training 时，更新参数 $\theta$ 以降低在 validation set $\mathcal D^{val}$ 上的误差：</p>
+<img src="https://i.loli.net/2020/05/02/uYzHdO5qWR98c4A.png" alt="image-20200502144405743" style="zoom:50%;" />
+
+<p>这一方法描述了基于优化的元学习的主要内容：</p>
+<ul>
+<li>initialization</li>
+<li>adaptation procedure (inner loop)：公式 1。</li>
+<li>termination (outer loop)：公式 2。</li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/05/02/ECCV2018-Triplet-Loss-in-Siamese-Network-for-Object-Tracking/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1142,154 +1219,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/04/24/AAAI2020-Discriminative-and-Robust-Online-Learning-for-Siamese-Visual-Tracking/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="zhbli">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="zhbli">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/04/24/AAAI2020-Discriminative-and-Robust-Online-Learning-for-Siamese-Visual-Tracking/" class="post-title-link" itemprop="url">[AAAI2020] Discriminative and Robust Online Learning for Siamese Visual Tracking</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2020-04-24 12:45:57" itemprop="dateCreated datePublished" datetime="2020-04-24T12:45:57+08:00">2020-04-24</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-05-13 20:48:38" itemprop="dateModified" datetime="2020-05-13T20:48:38+08:00">2020-05-13</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Tracking/" itemprop="url" rel="index"><span itemprop="name">Tracking</span></a>
-                </span>
-                  , 
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Tracking/Model-Update/" itemprop="url" rel="index"><span itemprop="name">Model Update</span></a>
-                </span>
-                  , 
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Tracking/Template-Update/" itemprop="url" rel="index"><span itemprop="name">Template Update</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="Abstract"><a href="#Abstract" class="headerlink" title="Abstract"></a>Abstract</h2><p>（待开源）<a target="_blank" rel="noopener" href="https://github.com/shallowtoil/DROL">https://github.com/shallowtoil/DROL</a></p>
-<p>现有跟踪算法的问题：</p>
-<ul>
-<li>对于 online-only 方法，学习的模型缺乏通用性，因此在目标回归方面性能较差。</li>
-<li>对于 offline-only 方法，缺乏特定目标的上下文信息，因此难以区分相似物体，且对形变不够鲁棒。</li>
-</ul>
-<p>本文的解决方案：</p>
-<ul>
-<li>为离线训练的孪生网络设计基于注意力机制的 online module。</li>
-<li>提出<strong>滤波器更新</strong>机制，用于抑制背景噪声。</li>
-<li>提出<strong>模板更新</strong>策略，用于处理目标形变以提高鲁棒性。</li>
-</ul>
-<h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><p>跟踪器可分为判别式跟踪器和生成式跟踪器：</p>
-<ul>
-<li>判别式跟踪器训练一个分类器来区分目标和背景。</li>
-<li>生成式跟踪器通过计算目标和 search candidates 之间的联合概率密度来找到最佳匹配。</li>
-</ul>
-<p>孪生网络的缺点：</p>
-<ol>
-<li>忽视背景信息，易受 distractors 影响。</li>
-<li>仅依赖第一帧进行作为模板，或仅仅依靠求平均来进行模板更新。</li>
-</ol>
-<p>本文引入在线机制，该机制参考了 discriminative trackers，这些跟踪器通常具有判别性强的分类器和有效的在线更新策略。然而，直接在线更新孪生网络可能会引入噪声，从而破坏离线训练的特征。</p>
-<p>基于以上分析，本文提出于孪生网络互补的 online subnet。该 online subnet 基于注意力机制设计，用于提取最有代表性的目标特征，并可以进行高效优化。在线模块的相应图分别用于前面提到的两个问题：</p>
-<ol>
-<li>通过融合 online response map 和 siamese classification score，可以解决问题 1。</li>
-<li>将高质量的帧用于模板更新，可以解决问题 2。</li>
-</ol>
-<h2 id="Proposed-Method"><a href="#Proposed-Method" class="headerlink" title="Proposed Method"></a>Proposed Method</h2><img src="https://i.loli.net/2020/04/24/EgpP8salzdIxrwm.png" alt="image-20200424134131312"  />
-
-<img src="https://i.loli.net/2020/04/24/6dep8hbRV1a2BiN.png" alt="image-20200424132325992" style="zoom:50%;" />
-
-<blockquote>
-<p>本文提出的 online module 的结构。包括三部分：</p>
-<ol>
-<li>compression module：仅在第一帧优化。</li>
-<li>attention module：仅在第一帧优化。</li>
-<li>filter module：在后续帧优化。</li>
-</ol>
-</blockquote>
-<h3 id="Siamese-Matching-Subnet"><a href="#Siamese-Matching-Subnet" class="headerlink" title="Siamese Matching Subnet"></a>Siamese Matching Subnet</h3><p>设孪生网络的 embeddinig space 为 $\phi(\cdot)$，通过如下方式计算分类得分：</p>
-<img src="https://i.loli.net/2020/04/24/7EBwgfkNTo2G1bv.png" alt="image-20200424134452380" style="zoom:50%;" />
-
-<h3 id="Target-specific-Features"><a href="#Target-specific-Features" class="headerlink" title="Target-specific Features"></a>Target-specific Features</h3><p>我们提出以有监督的方式，利用 L2 损失，在孪生特征之上生成 target-specific features（公式 4）：</p>
-<img src="https://i.loli.net/2020/04/24/l4t5gGPqa37HEUN.png" alt="image-20200424131325052" style="zoom:50%;" />
-
-<p>其中 $f_C$ 是 expected output，表示每个位置的分类得分，$y_1$ 是给定目标边框的高斯。</p>
-<p>受 [Li et al. 2019b] [Yang et al. 2019] 的启发，拟合所有背景像素会主导在线学习，因为只有少数卷积滤波器对构建目标表示是重要的。</p>
-<blockquote>
-<p>[Li et al. 2019b] Li, X.; Ma, C.; Wu, B.; He, Z.; and Yang, M.-H. 2019b. <strong>Target-aware deep tracking</strong>. In Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition, 1369–1378.</p>
-<p>[Yang et al. 2019] Yang, K.; Song, H.; Zhang, K.; and Liu, Q. 2019. <strong>Hierarchical attentive siamese network for realtime visual tracking</strong>. Neural Computing and Applications 1–12.</p>
-</blockquote>
-<p>因此我们提出空间注意力和通道注意力来选择重要特征。</p>
-<h3 id="Discriminative-Learning-via-Filter-Update"><a href="#Discriminative-Learning-via-Filter-Update" class="headerlink" title="Discriminative Learning via Filter Update"></a>Discriminative Learning via Filter Update</h3><p>通过将公式 4 中的 $y_1$ 变成 $y_i$，可以在跟踪过程中一直优化 filter module。与 [Danelljan et al. 2019] 相同，采用共轭梯度下降以加快收敛速度。</p>
-<blockquote>
-<p>[Danelljan et al. 2019] Danelljan, M.; Bhat, G.; Khan, F. S.; and Felsberg, M. 2019. Atom: Accurate tracking by overlap maximization. In The IEEE Conference on Computer Vision and Pattern Recognition (CVPR).</p>
-</blockquote>
-<p>使用 filter module 得到的 online classification score 与 siamese classification score 融合，得到 adaptive classification score：</p>
-<img src="https://i.loli.net/2020/04/24/tMkCFn9EgOPjHUi.png" alt="image-20200424132710818" style="zoom:50%;" />
-
-<h3 id="Robust-Learning-via-Template-Update"><a href="#Robust-Learning-via-Template-Update" class="headerlink" title="Robust Learning via Template Update"></a>Robust Learning via Template Update</h3><p>我们在孪生网络上设计了一个额外的 template branch，用于保留最近帧的目标信息。注意，取得良好性能的关键取决于模板质量。我们通过 online classifier 输出的最大得分来判断模板质量：</p>
-<img src="https://i.loli.net/2020/04/24/uNOUzgjyKedpc8S.png" alt="image-20200424133235601" style="zoom:50%;" />
-
-<p>通过如下方式选择模板：</p>
-<img src="https://i.loli.net/2020/04/24/gKu6GoecFkVZsyB.png" alt="image-20200424133353166" style="zoom:50%;" />
-
-<p>其中，$\hat f^{cls}_M$ 表示最大得分的位置，$\hat f^{reg}_M$ 表示对应的边框。当两个模板预测的边框相似，但分类得分差距大时，使用新的模板。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1359,7 +1288,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">119</span>
+          <span class="site-state-item-count">120</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

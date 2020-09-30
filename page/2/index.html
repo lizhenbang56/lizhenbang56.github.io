@@ -203,6 +203,81 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/09/09/coding-video-analyst/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="zhbli">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="zhbli">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/09/09/coding-video-analyst/" class="post-title-link" itemprop="url">[coding] video_analyst</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2020-09-09 15:57:03 / Modified: 18:11:48" itemprop="dateCreated datePublished" datetime="2020-09-09T15:57:03+08:00">2020-09-09</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>test.py</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    tester.test()  <span class="comment"># 调用 OTBTester.test</span></span><br></pre></td></tr></table></figure>
+
+<p>tester_impl/otb.py</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">OTBTester</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">test</span>:</span></span><br><span class="line">        experiment = ExperimentOTB(...)</span><br></pre></td></tr></table></figure>
+
+<p>experiments/otb.py</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ExperimentOTB</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>:</span></span><br><span class="line">        <span class="keyword">pass</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">run</span>:</span>  <span class="comment"># 在 OTB 数据集上运行跟踪器</span></span><br><span class="line">        <span class="keyword">for</span> s, (img_files, anno) <span class="keyword">in</span> enumerate(self.dataste):</span><br><span class="line">            record_file = os.path.join(self.result_dir, tracker.name, <span class="string">&#x27;%s.txt&#x27;</span>%seq_name)</span><br><span class="line">        	boxes, times = tracker.track(...)  <span class="comment"># 调用 PipelineTraker.track</span></span><br><span class="line">            self._record(record_file, boxes, times)</span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">report</span>(<span class="params">tracker_names</span>):</span></span><br><span class="line">        report_dir = os.path.join(self.report_dir, tracker_names[<span class="number">0</span>])</span><br><span class="line">        </span><br></pre></td></tr></table></figure>
+
+<p>got_benchmark_helper.py</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">PipelineTraker</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">track</span>(<span class="params">img_files, box</span>):</span></span><br><span class="line">        boxes = np.zeros((frame_num, <span class="number">4</span>))</span><br><span class="line">        boxes[<span class="number">0</span>] = box  <span class="comment"># 用于保存跟踪结果。box调用1/2</span></span><br><span class="line">        <span class="keyword">for</span> f, img_file <span class="keyword">in</span> enumerate(img_files):</span><br><span class="line">            image = cv2.imread(img_file, cv2.IMREAD_COLOR)</span><br><span class="line">            <span class="keyword">if</span> f == <span class="number">0</span>:</span><br><span class="line">                self.init(image, box)  <span class="comment"># 调用 SiamFCppTracker.init. box调用2/2. box: xywh</span></span><br><span class="line">            <span class="keyword">else</span>:</span><br><span class="line">                boxes[f, :] = self.update(image)</span><br></pre></td></tr></table></figure>
+
+<p>siamfcpp_track.py</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">SiamFCppTracker</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">init</span>:</span></span><br><span class="line">        ...</span><br></pre></td></tr></table></figure>
+
+
+
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/09/09/coding-OTB%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -862,91 +937,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/08/21/ICCV2017-Universal-Adversarial-Perturbations-Against-Semantic-Image-Segmentation/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="zhbli">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="zhbli">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/08/21/ICCV2017-Universal-Adversarial-Perturbations-Against-Semantic-Image-Segmentation/" class="post-title-link" itemprop="url">[ICCV2017] Universal Adversarial Perturbations Against Semantic Image Segmentation</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-              
-
-              <time title="Created: 2020-08-21 11:25:51 / Modified: 12:38:18" itemprop="dateCreated datePublished" datetime="2020-08-21T11:25:51+08:00">2020-08-21</time>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="Background"><a href="#Background" class="headerlink" title="Background"></a>Background</h2><p>定义$f_\theta$是参数为$\theta$的神经网络，x是$f_\theta$的输入图像。$f_\theta(x)$是$f_\theta$的输出，即条件概率$p(y|x,\theta)$，编码为 class probability vector。$y^{true}$是ground truth target，即 one hot encoding of the class。令$J_{cls}(f_\theta(x),y^{true})$是分类损失，如交叉熵。</p>
-<h3 id="Adversarial-Examples"><a href="#Adversarial-Examples" class="headerlink" title="Adversarial Examples"></a>Adversarial Examples</h3><p>定义$\xi$是对抗扰动，对抗样本为$x^{adv}=x+\xi$。</p>
-<h2 id="Adversarial-Perturbations-Against-Semantic-Image-Segmentation"><a href="#Adversarial-Perturbations-Against-Semantic-Image-Segmentation" class="headerlink" title="Adversarial Perturbations Against Semantic Image Segmentation"></a>Adversarial Perturbations Against Semantic Image Segmentation</h2><p>对于图像语义分割，损失是所有空间位置$(i,j)\in I$的和：</p>
-<img src="https://i.loli.net/2020/08/21/rVRG3c7TNx98bYd.png" alt="image-20200821114028688" style="zoom:50%;" />
-
-<p>希望网络的预测能接近$y^{target}$。接下来讨论如何选择$y^{target}$。</p>
-<h3 id="Adversarial-Target-Generation"><a href="#Adversarial-Target-Generation" class="headerlink" title="Adversarial Target Generation"></a>Adversarial Target Generation</h3><p>原则上，$y^{target}$的选择可以是任意的。但是，不能依赖$y^{true}$得到$y^{target}$，因为我们不知道$y^{true}$。因此，可以依赖$y^{pred}$得到$y^{pred}$。</p>
-<p>希望$y^{pred}$和$y^{target}$大体上是相似的，只是隐藏一些重要的目标。</p>
-<h4 id="Static-target-segmentation"><a href="#Static-target-segmentation" class="headerlink" title="Static target segmentation"></a>Static target segmentation</h4><p>对于一段视频序列，将第一帧的$y^{pred}$定义为后续所有帧的$y^{target}$。该方式适用于如下情况：希望攻击静态摄像机，隐藏特定时间段内的可以活动。</p>
-<h4 id="Dynamic-target-segmentation"><a href="#Dynamic-target-segmentation" class="headerlink" title="Dynamic target segmentation"></a>Dynamic target segmentation</h4><p>对于运动场景，希望$y^{pred}$和$y^{target}$大体上是相似的，只是隐藏一些重要的目标。定义$o$是希望隐藏的类别，$I_o={(i,j)|f_\theta(x_{ij}=o)}, I_{bg}=I \backslash I_o$。隐藏方式为替换为附近区域的类别。</p>
-<h3 id="Image-Dependent-Perturbations"><a href="#Image-Dependent-Perturbations" class="headerlink" title="Image-Dependent Perturbations"></a>Image-Dependent Perturbations</h3><p>对抗目标为：</p>
-<img src="https://i.loli.net/2020/08/21/SdpwfnDEBUzP1Yq.png" alt="image-20200821115810284" style="zoom:50%;" />
-
-<p>优化方法为：</p>
-<img src="https://i.loli.net/2020/08/21/DuMHXfpG52wEnyt.png" alt="image-20200821115946591" style="zoom:50%;" />
-
-<p>由于隐藏特定目标更重要，所以为不同区域施加不同权重：</p>
-<img src="https://i.loli.net/2020/08/21/zN2gI3vGm6d9KSO.png" alt="image-20200821120117519" style="zoom:50%;" />
-
-<p>另一个问题是，不同像素点之间的梯度可能是相反的，因此存在竞争关系。标准的交叉熵损失通常会鼓励已经分对的预测置信度更高。这在分类任务中不存在问题，因为只有一个 target output。为此，我们对于置信度超过0.75的损失设为0。</p>
-<h3 id="Universal-Perturbations"><a href="#Universal-Perturbations" class="headerlink" title="Universal Perturbations"></a>Universal Perturbations</h3><p>我们在m个训练输入$D^{train}={(x^{(k)}, y^{target,k})}_{k=1}^m$上生成通用对抗扰动Ξ。我们希望该扰动可以泛化到测试图像x上，而且x没有target $y^{target}$。优化函数为：</p>
-<img src="https://i.loli.net/2020/08/21/lYvDsXMcGE3yAda.png" alt="image-20200821122041831" style="zoom:50%;" />
-
-<p>这个方法的一个潜在问题是过度拟合训练数据。我们采用相对简单的正则化方法：使Ξ在两个空间维度上都是周期性的：</p>
-<img src="https://i.loli.net/2020/08/21/MGC3eih7wlgDBdV.png" alt="image-20200821122951632" style="zoom:50%;" />
-
-<p>因此需要在所有训练数据和所有tiles上计算梯度：</p>
-<img src="https://i.loli.net/2020/08/21/BnSbPXjruVDIw9d.png" alt="image-20200821123500699" style="zoom:50%;" />
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1016,7 +1006,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">119</span>
+          <span class="site-state-item-count">120</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
