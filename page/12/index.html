@@ -203,6 +203,118 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/04/21/CVPR2019-ArcFace-Additive-Angular-Margin-Loss-for-Deep-Face-Recognition/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="zhbli">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="zhbli">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/04/21/CVPR2019-ArcFace-Additive-Angular-Margin-Loss-for-Deep-Face-Recognition/" class="post-title-link" itemprop="url">[CVPR2019] ArcFace: Additive Angular Margin Loss for Deep Face Recognition</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2020-04-21 13:45:14 / Modified: 15:35:46" itemprop="dateCreated datePublished" datetime="2020-04-21T13:45:14+08:00">2020-04-21</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="Abstract"><a href="#Abstract" class="headerlink" title="Abstract"></a>Abstract</h2><p>Centre loss 为实现类内紧凑型，在欧氏空间中惩罚特征到类中心的距离。</p>
+<p>SphereFase 假定最后一个全连接层中的线性变换矩阵可以被作用角度空间中类中心的表示。因此以 multiplicative 方式惩罚特征和对应权重的角度。</p>
+<p>最近，为了最大化人脸类别的可分离性，将 margins 整合到以后的损失中。</p>
+<p>本文提出 Additive Angular Margin Loss（ArcFace）来获得高度判别行的特征。ArcFace 具有清晰的几何解释，因为它与超球上的测地距离具有确切的对应。</p>
+<p>本算法取得了最好的性能，同时增加的计算量几乎可以忽略不计。</p>
+<p><a target="_blank" rel="noopener" href="https://github.com/deepinsight/insightface">https://github.com/deepinsight/insightface</a></p>
+<h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><p>主要有两种方法训练人脸识别网络：</p>
+<ol>
+<li><p>使用 softmax 训练多类分类器。</p>
+<ul>
+<li>softmax loss 的缺点：<ol>
+<li>线性变化矩阵的尺寸随类别数而增加。</li>
+<li>难以适用于开集人脸识别任务。</li>
+</ol>
+</li>
+<li>改进：<ul>
+<li>centre loss（ECCV2016）。缺点：训练时更新实际的中心很困难，因为人脸类别很多。</li>
+<li>Sphereface（CVPR2017）。缺点：损失函数需要一系列近似，导致训练不稳定。为了稳定训练，与标准 softmax 混合训练。然而这又容易使 softmax 损失主导训练过程。</li>
+<li>CosFace（CVPR2018）。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>直接学习 embedding（利用，使用 triplet loss）。triplet loss 的缺点：</p>
+<ol>
+<li>大规模数据集中三元组数量会组合爆炸，导致更多的迭代次数。</li>
+<li>semi-hard sample mining 很困难。</li>
+</ol>
+</li>
+</ol>
+<p>本文方法的优点总结如下：</p>
+<ul>
+<li>Engaging：通过归一化超球面中角度和弧度之间的精确对应关系，直接优化了 geodesic distance margin。</li>
+<li>Effective：性能最优。</li>
+<li>Easy：仅需几行代码。不需要与其他损失函数整合以稳定训练，在任何训练集上都易于训练。</li>
+<li>Efficient：计算量很小，可以轻松对数百万个身份进行训练。</li>
+</ul>
+<h2 id="Proposed-Approach"><a href="#Proposed-Approach" class="headerlink" title="Proposed Approach"></a>Proposed Approach</h2><h3 id="ArcFace"><a href="#ArcFace" class="headerlink" title="ArcFace"></a>ArcFace</h3><p>最常用的 softmax 分类损失定义如下：</p>
+<img src="https://i.loli.net/2020/04/21/M4UOceLat8jmFzA.png" alt="image-20200421151700044" style="zoom:50%;" />
+
+<p>其中，特征维度是 512。</p>
+<p>softmax 的缺点：未明确优化 embedding，以使得类内样本更相似，类间样本更多样。从而导致当类内表观变化大或者测试集很大时性能不佳。</p>
+<p>接下来对损失改进，使得学得的特征分布在半径为 $s$ 的超球上：</p>
+<img src="https://i.loli.net/2020/04/21/XfRs9zDEavAlSQo.png" alt="image-20200421151725782" style="zoom:50%;" />
+
+<p>进一步，我们通过添加 margin penalty 改善类内的紧凑性和类间的可分性。</p>
+<img src="https://i.loli.net/2020/04/21/qDaz3XLM9PTVIRY.png" alt="image-20200421151857337" style="zoom:50%;" />
+
+<h3 id="Comparison-with-SphereFace-and-CosFace"><a href="#Comparison-with-SphereFace-and-CosFace" class="headerlink" title="Comparison with SphereFace and CosFace"></a>Comparison with SphereFace and CosFace</h3><p>margin penalty 不同：</p>
+<ul>
+<li>multiplicative angular margin：SphereFace</li>
+<li>additive angular margin：ArcFace</li>
+<li>additive cosine margin：CosFase</li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/04/21/CVPR2020-Data-Uncertainty-Learning-in-Face-Recognition/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1422,198 +1534,10 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/04/16/CVPR2020-Deformable-Siamese-Attention-Networks-for-Visual-Objec-Tracking/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="zhbli">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="zhbli">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/04/16/CVPR2020-Deformable-Siamese-Attention-Networks-for-Visual-Objec-Tracking/" class="post-title-link" itemprop="url">[CVPR2020] Deformable Siamese Attention Networks for Visual Object Tracking</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2020-04-16 11:01:31" itemprop="dateCreated datePublished" datetime="2020-04-16T11:01:31+08:00">2020-04-16</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-05-13 20:40:10" itemprop="dateModified" datetime="2020-05-13T20:40:10+08:00">2020-05-13</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Tracking/" itemprop="url" rel="index"><span itemprop="name">Tracking</span></a>
-                </span>
-                  , 
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Tracking/Architecture/" itemprop="url" rel="index"><span itemprop="name">Architecture</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="Abstract"><a href="#Abstract" class="headerlink" title="Abstract"></a>Abstract</h2><p>本文指出，孪生跟踪器存在的问题有：</p>
-<ol>
-<li>target template 不会在线更新。</li>
-<li>target template  和 search image 的特征是独立计算的。</li>
-</ol>
-<p>本文提出了 SiamAttn（Deformable Siamese Attention Networks），通过引入新的孪生注意力机制，来计算 deformable self-attention 和 cross-attention：</p>
-<ol>
-<li>self-attention 通过空间注意力学习上下文信息，并使用通道注意力选择性地强调互相依赖的 channel-wise features。</li>
-<li>cross-attention 能够聚合 target template 和 search image 之间丰富的 contextual interdependencies, 从而隐式地自适应更新 target template。</li>
-</ol>
-<p>此外，本文提出了 region refinement module，用于计算 attentional features 之间的逐通道互相关，从而实现更准确的跟踪。</p>
-<p>主要实验结果：</p>
-<ol>
-<li>VOT2016：0.537（SiamRPN++：0.464）。</li>
-<li>VOT2018：0.470（SiamRPN++：0.415）。</li>
-</ol>
-<h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><p>孪生跟踪器中，target template 不会在线更新，导致的问题是：难以准确跟踪具有较大表观变化、剧烈形变或遮挡的目标，增加了跟踪漂移的风险。</p>
-<p>孪生跟踪器中，target template  和 search image 的特征是独立计算的，导致的问题是：target features 中的背景上下文信息被完全丢弃了，但这种信息对于区分目标和相邻干扰物或复杂背景具有重要作用。最近的工作 [41] [14] 尝试通过整合先前目标的特征来增强目标表示，但是忽略了来自背景的具有判别力的上下文信息。</p>
-<blockquote>
-<p>[41] Tianyu Yang and Antoni B. Chan. Learning dynamic memory networks for object tracking. In ECCV, 2018.</p>
-<p>[14] Qing Guo, Wei Feng, Ce Zhou, Rui Huang, Liang Wan, and Song Wang. Learning dynamic siamese network for visual object tracking. In ICCV, 2017.</p>
-</blockquote>
-<p>本文引入了新的孪生注意力机制，通过计算孪生网络中的 cross-attention，将丰富的背景上下文编码到目标表示中。</p>
-<p>最近，注意力机制被引入到跟踪任务中，然而在这些方法中，target template/search image 的注意力和深层特征被分别计算，这限制了孪生架构的潜在性能。</p>
-<p>本文提出了 Deformable Siamese Attention Networks（SiamAttn），来提高孪生跟踪器的特征学习能力。</p>
-<h2 id="Deformable-Siamese-Attention-Networks"><a href="#Deformable-Siamese-Attention-Networks" class="headerlink" title="Deformable Siamese Attention Networks"></a>Deformable Siamese Attention Networks</h2><p><img src="https://i.loli.net/2020/04/16/jhH4l5pL2yUoT1k.png" alt="image-20200416115716119"></p>
-<p>本文提出的跟踪器包括三个组件：</p>
-<ol>
-<li>deformable Siamese attention (DSA) module</li>
-<li>Siamese region proposal networks (Siamese RPN)</li>
-<li>region refinement module</li>
-</ol>
-<h3 id="Deformable-Siamese-Attention-Module"><a href="#Deformable-Siamese-Attention-Module" class="headerlink" title="Deformable Siamese Attention Module"></a>Deformable Siamese Attention Module</h3><p><img src="https://i.loli.net/2020/04/16/9l6hwUdYpFKkq3P.png" alt="image-20200416115958941"></p>
-<p>DSA 模块的输入与输出：</p>
-<ul>
-<li>输入——由孪生网络计算的一对卷积特征</li>
-<li>输出——由孪生注意力机制调制的特征</li>
-</ul>
-<p>DSA 模块包括两个组件：</p>
-<ol>
-<li>self-attention 子模块</li>
-<li>cross-attention 子模块</li>
-</ol>
-<h4 id="Self-Attention"><a href="#Self-Attention" class="headerlink" title="Self-Attention"></a>Self-Attention</h4><p>self-attention 包含两个方面：</p>
-<ol>
-<li>通道 attention</li>
-<li>空间 attention</li>
-</ol>
-<p>如 [24] 所示，高级卷积特征的每个 channel map 通常针对特定的目标类别产生响应。均等对待所有通道的特征将妨碍表示能力。类似地，受感受野的限制，特征图的每个位置只能感受局部空间信息。因此，从整幅图像中学习全局上下文至关重要。</p>
-<blockquote>
-<p>[24] Bo Li, Wei Wu, Qiang Wang, Fangyi Zhang, Junliang Xing, and Junjie Yan. Siamrpn++: Evolution of siamese visual tracking with very deep networks. In CVPR, 2019.</p>
-</blockquote>
-<p>具体而言，自注意力（包括通道/空间自注意力）分别在 target branch 和 search branch 上计算。</p>
-<p>以空间注意力为例，计算流程为：</p>
-<ol>
-<li><p>输入特征：$\mathbf{\text{X}} \in \mathbb{R}^{C \times H \times W}$。</p>
-</li>
-<li><p>在 $\mathbf{\text{X}}$ 上应用 $1 \times 1$ 卷积，得到 query features $\mathbf{\text{Q}} \in \mathbb{R}^{C’ \times H \times W}, C’ = \frac{1}{8}C$。</p>
-</li>
-<li><p>在 $\mathbf{\text{X}}$ 上应用 $1 \times 1$ 卷积，得到 key features $\mathbf{\text{K}} \in \mathbb{R}^{C’ \times H \times W}$。</p>
-</li>
-<li><p>对 $\mathbf{\text{Q}}$ 进行 reshape，得到 $\bar{\mathbf{\text{Q}}} \in \mathbb{R}^{C’ \times N}, N = H \times W$。</p>
-</li>
-<li><p>对 $\mathbf{\text{K}}$ 进行 reshape，得到 $\bar{\mathbf{\text{K}}} \in \mathbb{R}^{C’ \times N}$。</p>
-</li>
-<li><p>通过矩阵乘法和 column-wise softmax 得到 spatial self-attention map $\mathbf{A_s^s} \in \mathbb{R}^{N\times N}$：<br>$$<br>\mathbf{A_s^s} = \text{softmax}_{col}(\bar{\mathbf{\text{Q}}}^T\bar{\mathbf{\text{K}}})  \in \mathbb{R}^{N\times N}<br>$$</p>
-</li>
-<li><p>在 $\mathbf{\text{X}}$ 上应用 $1 \times 1$ 卷积和 reshape 操作，得到 value features $\bar{\mathbf{\text{V}}} \in \mathbb{R}^{C \times N}$。</p>
-</li>
-<li><p>在 $\mathbf{\text{X}}$ 上应用 reshape 操作，得到 $\bar{\mathbf{\text{X}}} \in \mathbb{R}^{C \times N}$。</p>
-</li>
-<li><p>得到 $\bar{\mathbf{X}}_s^s \in \mathbb{R}^{C \times N}$：<br>$$<br>\bar{\mathbf{\text{X}_s^s}} = \alpha \bar{\mathbf{\text{V}}}\mathbf{\text{A}_s^s} + \bar{\mathbf{\text{X}}} \in \mathbb{R}^{C \times N}<br>$$<br>其中 $\alpha$ 是标量参数。</p>
-</li>
-<li><p>对 $\bar{\mathbf{X}}_s^s$ 进行 reshape 操作，得到 $\mathbf{\text{X}_s^s} \in \mathbb{R}^{C \times H \times W}$。</p>
-</li>
-</ol>
-<p>同理可计算通道自注意力 $\mathbf{\text{A}_c^s}$ 和 channel-wise attentional features $\mathbf{\text{X}_c^s}$. 注意计算时不进行 $1\times 1$ 卷积。将空间注意力特征和通道注意力特征逐元素相加的到最终的自注意力特征 $\mathbf{\text{X}^s}$。</p>
-<h4 id="Cross-Attention"><a href="#Cross-Attention" class="headerlink" title="Cross-Attention"></a>Cross-Attention</h4><p>孪生网络通常在最后一层进行预测，而来自两个分支的特征是分别计算的，但彼此的特征可能会互相补偿。跟踪时通常会出现多个目标，甚至在跟踪过程中可能出现遮挡。因此，让 search branch 学习目标信息非常重要，这使 search branch 能够生成更具辨别性的表示，有助于更准确地识别目标。同时对于 target branch 而言，当对来自 search image 的上下文信息进行编码时，目标表示可能更有意义。为此，我们提出了一个 cross-attention 子模块，从两个孪生分支学习这种互信息，使两个分支可以更加协同地工作。</p>
-<p>以 search branch 为例，计算流程为：</p>
-<ol>
-<li><p>定义模板特征为 $\mathbf{Z} \in \mathbb{R}^{C \times h \times w}$，搜索特征为 $\mathbf{X} \in \mathbb{R}^{C \times H \times C}$。</p>
-</li>
-<li><p>对模板特征进行 reshape 操作，得到 $\bar{\mathbf{Z}} \in \mathbb{R}^{C \times n}, n = h \times w$。</p>
-</li>
-<li><p>从 target branch 计算 cross-attention：<br>$$<br>\mathbf{A}^{\text{c}} = \text{softmax}_{row}(\bar{\mathbf{Z}}\bar{\mathbf{Z}}^T) \in \mathbb{R}^{C\times C}<br>$$</p>
-</li>
-<li><p>将来自 target branch 的 cross-attention 编码到 search features 中：<br>$$<br>\bar{\mathbf{\text{X}}}^\mathbf{c} = \gamma \mathbf{\text{A}^c}\bar{\mathbf{\text{X}}} + \bar{\mathbf{\text{X}}} \in \mathbb{R}^{C \times N}<br>$$</p>
-<p>其中 $\gamma$ 是标量参数。</p>
-</li>
-<li><p>对 $\bar{\mathbf{\text{X}}}^\mathbf{c}$ 应用 reshape 操作，得到输出 cross-attentional features $\mathbf{\text{X}}^\mathbf{c} \in \mathbb{R}^{C\times H\times W}$。</p>
-</li>
-<li><p>将自注意力特征和 cross-attentional 特征逐元素相加得到搜索图像的 attentional features。</p>
-</li>
-</ol>
-<p>同理可计算 target image 的注意力特征。</p>
-<h4 id="Deformable-Attention"><a href="#Deformable-Attention" class="headerlink" title="Deformable Attention"></a>Deformable Attention</h4><p>将  $3\times 3$ 可变形卷积进一步应用于计算出的注意力特征，从而生成最终的注意力特征。</p>
-<h4 id="Region-Proposals"><a href="#Region-Proposals" class="headerlink" title="Region Proposals"></a>Region Proposals</h4><p>按照[24]，我们对从最后三个阶段计算出的 siamese features 应用三个 siamese RPN 块，生成三个 prediction maps，并通过加权和进行组合。Combined maps 的每个空间位置会预测一组 region proposals，将具有最高分类得分的 predicted proposal 选择为跟踪框。</p>
-<h3 id="Region-Refinement-Module"><a href="#Region-Refinement-Module" class="headerlink" title="Region Refinement Module"></a>Region Refinement Module</h3><p>该模块用于进一步提高预测的目标区域的定位精度。流程为：</p>
-<ol>
-<li>在每个 stage 中，对两个 attentional features 执行逐通道互相关，得到多个 correlation maps。</li>
-<li>correlation maps 送入一个 fusion block，通过使用上/下采样与 $1\times 1$ 卷积，把不同特征图调整到相同尺寸。</li>
-<li>将对齐的特征使用逐元素相加进行融合。</li>
-<li>利用 RPN 阶段预测的跟踪框（注意仅此一个框），进行池化，再预测目标的边框和 mask。</li>
-</ol>
-<p>在此基础上增加了两个额外操作：</p>
-<ol>
-<li>预测 mask 时，将前两阶段特征与 fused features 结合，用于编码细节信息。</li>
-<li>采用 deformable RoI pooling 使得预测更准确。</li>
-</ol>
-<p>边框回归和 mask 预测需要不同级别的卷积信息，因此使用空间分辨率为 $64 \times 64$ 的特征预测 mask，使用 空间分辨率为 $25\times 25$ 的特征回归边框。</p>
-<p>注意，该模块并没有预测分类任务。与 ATOM 和 SiamMask 等密集预测边框和 mask 的方法相比，该模块是轻量化的，仅为 1 个区域预测边框和 mask，计算更高效。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/page/11/"><i class="fa fa-angle-left" aria-label="Previous page"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/11/">11</a><span class="page-number current">12</span>
+    <a class="extend prev" rel="prev" href="/page/11/"><i class="fa fa-angle-left" aria-label="Previous page"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/11/">11</a><span class="page-number current">12</span><a class="page-number" href="/page/13/">13</a><a class="extend next" rel="next" href="/page/13/"><i class="fa fa-angle-right" aria-label="Next page"></i></a>
   </nav>
 
 
@@ -1679,7 +1603,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">120</span>
+          <span class="site-state-item-count">121</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
