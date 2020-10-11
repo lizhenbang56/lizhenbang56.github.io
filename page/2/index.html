@@ -203,6 +203,77 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/09/10/writing-Datasets/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="zhbli">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="zhbli">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/09/10/writing-Datasets/" class="post-title-link" itemprop="url">[writing] Datasets</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-09-10 17:42:11" itemprop="dateCreated datePublished" datetime="2020-09-10T17:42:11+08:00">2020-09-10</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-09-11 09:29:50" itemprop="dateModified" datetime="2020-09-11T09:29:50+08:00">2020-09-11</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="GOT-10k"><a href="#GOT-10k" class="headerlink" title="GOT-10k"></a>GOT-10k</h2><p>The GOT-10k testing set includes 180 sequences with 84 different object classes and 32 motion patterns.</p>
+<p>There is no overlap in object classes between the train and test splits, promoting the importance of generalization to unseen object classes.</p>
+<h2 id="OTB"><a href="#OTB" class="headerlink" title="OTB"></a>OTB</h2><p>OTB-2015 is one of the most commonly used benchmarks for visual object tracking.</p>
+<p>The OTB2015 dataset is the most popular benchmark dataset that most trackers are evaluated on. The dataset includes 100 sequences of various tracking scenarios.</p>
+<p>As one of the most classical benchmarks for the object tracking task, the OTB benchmark (Wu, Lim, and Yang 2013) provides a fair test for all families of trackers.</p>
+<p>OTB-2013 firstly contributes a testing dataset 2 by collecting 51 videos with manually annotated bounding box in each frame. The sequences are labeled with different attributes for further analysis of tracking performance.</p>
+<h2 id="TrackingNet"><a href="#TrackingNet" class="headerlink" title="TrackingNet"></a>TrackingNet</h2><p>TrackingNet contains 30000 sequences  with 14 million dense annotations and 511 sequences in the  test set. It covers diverse object classes and scenes, requiring trackers to have both discriminative and generative capabilities.</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/09/10/writing-Siamese-trackers/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -860,71 +931,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/08/23/arXiv1710-One-pixel-attack-for-fooling-deep-neural-networks/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="zhbli">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="zhbli">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/08/23/arXiv1710-One-pixel-attack-for-fooling-deep-neural-networks/" class="post-title-link" itemprop="url">[arXiv1710] One pixel attack for fooling deep neural networks </a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-              
-
-              <time title="Created: 2020-08-23 12:50:58 / Modified: 13:07:52" itemprop="dateCreated datePublished" datetime="2020-08-23T12:50:58+08:00">2020-08-23</time>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="METHODOLOGY"><a href="#METHODOLOGY" class="headerlink" title="METHODOLOGY"></a>METHODOLOGY</h2><h3 id="Problem-Description"><a href="#Problem-Description" class="headerlink" title="Problem Description"></a>Problem Description</h3><p>$f$ 是图像分类器, 输入为用 $n$ 维向量表示的图片. $x=(x_1,…,x_n)$ 是被正确分为类别 $t$ 的原始图像. $x$ 属于类别 $t$ 的概率为 $f_t(x)$. 向量 $e(x) =(e_1,…,e_n)$ 是对抗扰动, 目标类别是 $adv$。优化问题为：</p>
-<img src="https://i.loli.net/2020/08/23/Fv2SqBQAkrwEHD6.png" alt="image-20200823130108759" style="zoom:50%;" />
-
-<p>本文的优化问题略有不同：</p>
-<img src="https://i.loli.net/2020/08/23/HU1Xehkf3TRGjYm.png" alt="image-20200823130157790" style="zoom:50%;" />
-
-<p>在单像素约束的情况下，$d=1$。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -994,7 +1000,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">121</span>
+          <span class="site-state-item-count">122</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
