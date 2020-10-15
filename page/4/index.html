@@ -203,6 +203,68 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/08/17/CVPR2020-Transferable-Controllable-and-Inconspicuous-Adversarial-Attacks-on-Person-Re-identification-With-Deep-Mis-Ranking/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="zhbli">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="zhbli">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/08/17/CVPR2020-Transferable-Controllable-and-Inconspicuous-Adversarial-Attacks-on-Person-Re-identification-With-Deep-Mis-Ranking/" class="post-title-link" itemprop="url">[CVPR2020] Transferable, Controllable, and Inconspicuous Adversarial Attacks on Person Re-identification With Deep Mis-Ranking</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2020-08-17 10:26:28 / Modified: 10:48:42" itemprop="dateCreated datePublished" datetime="2020-08-17T10:26:28+08:00">2020-08-17</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="Methodology"><a href="#Methodology" class="headerlink" title="Methodology"></a>Methodology</h2><h3 id="Overall-Framework"><a href="#Overall-Framework" class="headerlink" title="Overall Framework"></a>Overall Framework</h3><p>我们希望使用生成器 $G$ 为每个输入图像 $I$ 产生扰动 $P$，以获得对抗样本 $\hat I$，从而攻击 ReID 网络 $T$。使用对抗生成网络实现这些 ，包括生成器 $G$ 和判别器 $D$。</p>
+<h3 id="Learning-to-Mis-Rank-Formulation-For-ReID"><a href="#Learning-to-Mis-Rank-Formulation-For-ReID" class="headerlink" title="Learning-to-Mis-Rank Formulation For ReID"></a>Learning-to-Mis-Rank Formulation For ReID</h3><p>本文提出 mis-ranking loss，最小化不匹配的对的距离，最大化匹配的对的距离。</p>
+<img src="https://i.loli.net/2020/08/17/sO7xpgba8fMHCDV.png" alt="image-20200817104504437" style="zoom:50%;" />
+
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/08/16/ICCV2019-FDA-Feature-Disruptive-Attack/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1058,86 +1120,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/07/30/CVPR2020-Temporally-Distributed-Networks-for-Fast-Video-Segmentation/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="zhbli">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="zhbli">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/07/30/CVPR2020-Temporally-Distributed-Networks-for-Fast-Video-Segmentation/" class="post-title-link" itemprop="url">[CVPR2020] Temporally Distributed Networks for Fast Video Segmentation</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-              
-
-              <time title="Created: 2020-07-30 17:12:27 / Modified: 20:48:52" itemprop="dateCreated datePublished" datetime="2020-07-30T17:12:27+08:00">2020-07-30</time>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="Abstract"><a href="#Abstract" class="headerlink" title="Abstract"></a>Abstract</h2><p>作者观察到，可以将若干较浅子网的特征进行组合，以近似一个 deep CNN 的高层特征。</p>
-<p>利用视频中固有的时间连续性，作者将这些子网分布到连续的帧上。</p>
-<p>因此，在每个 time step 上，只需执行轻量级计算，即可从单个子网中提取一个 sub-features group。</p>
-<p>用于分割的 full features 由一个注意力传播模块得到，该模块的作用是对帧间的几何形变进行补偿。</p>
-<p>另外，还引入了知识蒸馏损失，以进一步提高 full features 和 sub-features 的表示能力。</p>
-<img src="https://i.loli.net/2020/07/30/WzG4AfpaBd97YFI.png" alt="image-20200730173633845" style="zoom:50%;" />
-
-<h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><p>进行视频语义分割最直接的方法是在每帧独立应用图像语义分割算法，但这样就无法利用视频中的时间信息。</p>
-<p>一种解决方案是添加额外的层来建模时间上下文，以提取更好的特征 [11,20,23,35]。由于必须在每一帧重新计算所有特征，因此这些方法效率较低。</p>
-<blockquote>
-<p>[11] <em>R. Gadde, V. Jampani, and P. V. Gehler (2017)</em> <strong>Semantic video cnns through representation warping</strong>. In CVPR</p>
-<p>[20] <em>X. Jin, X. Li, H. Xiao, X. Shen, Z. Lin, J. Yang, Y. Chen, J. Dong, L. Liu, Z. Jie, et al. (2017)</em> <strong>Video scene parsing with predictive feature learning</strong>. In ICCV</p>
-<p>[23] <em>A. Kundu, V. Vineet, and V. Koltun (2016)</em> <strong>Feature space optimization for semantic video segmentation</strong>. In CVPR</p>
-<p>[35] <em>D. Nilsson and C. Sminchisescu (2018)</em> <strong>Semantic video segmentation by gated recurrent flow propagation</strong>. In CVPR</p>
-</blockquote>
-<p>为了减少冗余计算，一种合理的方法是仅在关键帧上应用图像分割模型，然后在其他帧中复用高层特征[19,27,31,60]。关键帧与其他帧</p>
-<blockquote>
-<p>[19] <em>S. Jain, X. Wang, and J. E. Gonzalez (2019)</em> <strong>Accel: a corrective fusion network for efficient semantic segmentation on video</strong>. In CVPR</p>
-<p>[27] <em>Y. Li, J. Shi, and D. Lin (2018)</em> <strong>Low-latency video semantic segmentation</strong>. In CVPR</p>
-<p>[31] <em>B. Mahasseni, S. Todorovic, and A. Fern (2017)</em> <strong>Budget-aware deep semantic video segmentation</strong>. In CVPR</p>
-<p>[60] <em>X. Zhu, Y. Xiong, J. Dai, L. Yuan, and Y. Wei (2017)</em> <strong>Deep feature flow for video recognition</strong>. In CVPR</p>
-</blockquote>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1207,7 +1189,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">122</span>
+          <span class="site-state-item-count">123</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

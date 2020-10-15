@@ -203,6 +203,100 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/05/07/ICLR2019-Robustness-may-be-at-odds-with-accuracy/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="zhbli">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="zhbli">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/05/07/ICLR2019-Robustness-may-be-at-odds-with-accuracy/" class="post-title-link" itemprop="url">[ICLR2019] Robustness may be at odds with accuracy</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-05-07 19:18:48" itemprop="dateCreated datePublished" datetime="2020-05-07T19:18:48+08:00">2020-05-07</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-05-08 12:40:02" itemprop="dateModified" datetime="2020-05-08T12:40:02+08:00">2020-05-08</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="Abstract"><a href="#Abstract" class="headerlink" title="Abstract"></a>Abstract</h2><p>本文认为，adversarial robustness 和 standard generalization 之间存在 inherent tension。具体而言，训练 robust models 可能不仅会消耗更多资源，还会导致准确性下降。我们证明在模型的准确性和对 adversarial perturbations 的鲁棒性之间的折衷可能存在于相当简单和自然的环境中。这些发现也证实了在更复杂的环境中凭经验观察到的类似现象。此外，我们认为造成这种现象的原因是 robust classifiers 与 standard classifiers 学习到不同的特征表示的结果。这些差异带来了意想不到的好处——通过 robust models 学习的表示倾向于与  salient data characteristics 和 human perception 能够更好地对齐。</p>
+<h2 id="On-the-Price-of-Adversarial-Robustness"><a href="#On-the-Price-of-Adversarial-Robustness" class="headerlink" title="On the Price of Adversarial Robustness"></a>On the Price of Adversarial Robustness</h2><p>在传统的分类中，目的是训练 expected loss/population risk 低的模型（公式 1）：</p>
+<img src="https://i.loli.net/2020/05/08/k6KurILd3fROUcv.png" alt="image-20200508113009574" style="zoom:50%;" />
+
+<h4 id="Adversarial-robustness"><a href="#Adversarial-robustness" class="headerlink" title="Adversarial robustness"></a>Adversarial robustness</h4><p>希望模型是 adversarially robust 的，因此目的是训练 expected adversarial loss 低的模型（公式 2）：</p>
+<img src="https://i.loli.net/2020/05/08/IpeG4KU1PzLZTB6.png" alt="image-20200508113431847" style="zoom:50%;" />
+
+<p>其中，$\Delta$ 表示可引起分类错误的对抗扰动。本文重点关注 $\Delta$ 是 $\ell_p$-bounded perturbations 的集合的情况：$\Delta={\delta\in \mathbb R^d|\ ||\delta||\le\varepsilon}$。</p>
+<h4 id="Adversarial-training"><a href="#Adversarial-training" class="headerlink" title="Adversarial training"></a>Adversarial training</h4><p>迄今为止，建立 adversarially robust models 的最成功的方法是对抗训练。对抗训练的动机是将公式 2 视为统计学习问题，因此需要解决相应的 (adversarial) empirical risk minimization 问题：</p>
+<img src="https://i.loli.net/2020/05/08/s4WKal7TiRbmLtY.png" alt="image-20200508114507694" style="zoom:50%;" />
+
+<p>虽然对抗训练很有效，但也存在一些缺点：</p>
+<ul>
+<li>训练时间增加：需要在每个参数更新步骤中计算新的扰动。</li>
+<li>需要更多训练数据。</li>
+</ul>
+<p>然而本文发现，robust classifiers 还存在另一个缺点：精度不如 standard classifiers。</p>
+<h4 id="Adversarial-Training-as-a-Form-of-Data-Augmentation"><a href="#Adversarial-Training-as-a-Form-of-Data-Augmentation" class="headerlink" title="Adversarial Training as a Form of Data Augmentation"></a>Adversarial Training as a Form of Data Augmentation</h4><p>我们的出发点是，对抗训练是数据增强的 “终极形式”。然而实验证明，经过对抗性的网络，准确性会降低。本文的目的是说明和解释这种现象的根源。特别是，我们想了解，为什么在对抗性和精度之间要进行取舍？</p>
+<p>本文证明，这可能是 adversarial robustness 和 standard generalization 的目标不同所导致的必然结果。</p>
+<h3 id="Adversarial-robustness-might-be-incompatible-with-standard-accuracy"><a href="#Adversarial-robustness-might-be-incompatible-with-standard-accuracy" class="headerlink" title="Adversarial robustness might be incompatible with standard accuracy"></a>Adversarial robustness might be incompatible with standard accuracy</h3><p>略。</p>
+<h3 id="The-importance-of-adversarial-training"><a href="#The-importance-of-adversarial-training" class="headerlink" title="The importance of adversarial training"></a>The importance of adversarial training</h3><p>略。</p>
+<h2 id="Unexpected-benefits-of-adversarial-robustness"><a href="#Unexpected-benefits-of-adversarial-robustness" class="headerlink" title="Unexpected benefits of adversarial robustness"></a>Unexpected benefits of adversarial robustness</h2><p>和 robust models 一样，对于人类而言，同样对小的扰动不敏感，因此 robust models 比 standard models 更符合人类视觉。</p>
+<h4 id="Loss-gradients-in-the-input-space-align-well-with-human-perception"><a href="#Loss-gradients-in-the-input-space-align-well-with-human-perception" class="headerlink" title="Loss gradients in the input space align well with human perception"></a>Loss gradients in the input space align well with human perception</h4><p>通过可视化损失相对于像素的梯度，发现经过对抗训练的网络的梯度与输入图像的 perceptually relevant features（如边缘）对齐得很好。而 standard networks 的梯度对人类来说非常复杂。</p>
+<p><img src="https://i.loli.net/2020/05/08/mk4BYVGsgQ3b2p8.png" alt="image-20200508123448564"></p>
+<h4 id="Adversarial-examples-exhibit-salient-data-characteristics"><a href="#Adversarial-examples-exhibit-salient-data-characteristics" class="headerlink" title="Adversarial examples exhibit salient data characteristics"></a>Adversarial examples exhibit salient data characteristics</h4><p>现在研究 robust/standard models 的对抗样本在视觉上是什么样的。</p>
+<p>使用 PGD 生成对抗样本。</p>
+<p><img src="https://i.loli.net/2020/05/08/7iZazK4MmfIr5UN.png" alt="image-20200508123233911"></p>
+<p>如上图所示，robust models 的对抗样本，具有另一类别的显著特征，而 standard models 的对抗样本仅比输入图像更加嘈杂。</p>
+<h4 id="Smooth-cross-class-interpolations-via-gradient-descent"><a href="#Smooth-cross-class-interpolations-via-gradient-descent" class="headerlink" title="Smooth cross-class interpolations via gradient descent"></a>Smooth cross-class interpolations via gradient descent</h4><p>通过在原始图像和 PGD 生成的图像之间进行线性插值，可以得到两类直接平滑的，感觉上合理的插值。这种插值往往仅通过 GAN 还能实现。我们推测本文的插值方法和基于 GAN 的插值方法的相似性不是巧合，鞍点问题可能是这种现象的根源。</p>
+<p><img src="https://i.loli.net/2020/05/08/8TKqAF1NvGQnwID.png" alt="image-20200508123923889"></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/05/07/arXiv1906-Image-Synthesis-with-a-Single-Robust-Classifier/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1245,150 +1339,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/05/03/CVPR2020-Cooling-Shrinking-Attack-Blinding-the-Tracker-with-Imperceptible-Noises/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="zhbli">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="zhbli">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/05/03/CVPR2020-Cooling-Shrinking-Attack-Blinding-the-Tracker-with-Imperceptible-Noises/" class="post-title-link" itemprop="url">[CVPR2020] Cooling-Shrinking Attack: Blinding the Tracker with Imperceptible Noises</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2020-05-03 09:20:33" itemprop="dateCreated datePublished" datetime="2020-05-03T09:20:33+08:00">2020-05-03</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-08-15 14:53:16" itemprop="dateModified" datetime="2020-08-15T14:53:16+08:00">2020-08-15</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Tracking/" itemprop="url" rel="index"><span itemprop="name">Tracking</span></a>
-                </span>
-                  , 
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Tracking/Adversarial-Attack/" itemprop="url" rel="index"><span itemprop="name">Adversarial Attack</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="Abstract"><a href="#Abstract" class="headerlink" title="Abstract"></a>Abstract</h2><p>本文利用 cooling-shrinking attack method 攻击孪生网络跟踪器。</p>
-<p>性能：</p>
-<ul>
-<li><p><a target="_blank" rel="noopener" href="https://github.com/MasterBin-IIAU/CSA">https://github.com/MasterBin-IIAU/CSA</a></p>
-</li>
-<li><p>在三个数据库上进行攻击：OTB100、VOT2018、LaSOT。</p>
-</li>
-</ul>
-<h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><p><code>Adversarial attack</code> 常分为两类：</p>
-<ol>
-<li>iterative-optimization-based atracks：进行梯度上升，最大化 adversarial objective function。</li>
-<li>deep-network-based attacks：使用大量数据训练 adversarial perturbation-generator。</li>
-</ol>
-<p>本文提出的 cooling-shrinking attack method 学习有效的 perturbation generator，通过如下方式使跟踪失败：</p>
-<ul>
-<li>冷却 heatmap 中存在目标的 hot regions。</li>
-<li>缩小目标边框。</li>
-</ul>
-<h2 id="Cooling-Shrinking-Attack"><a href="#Cooling-Shrinking-Attack" class="headerlink" title="Cooling-Shrinking Attack"></a>Cooling-Shrinking Attack</h2><p>本文提出 adversarial perturbation-generator 来欺骗 siamrpn++ 跟踪器，设计两种 perturbation-generator 分别攻击 search regions 和 template。</p>
-<h3 id="Overall-Pipeline"><a href="#Overall-Pipeline" class="headerlink" title="Overall Pipeline"></a>Overall Pipeline</h3><img src="https://i.loli.net/2020/05/03/TltiZcINpuAxDG3.png" alt="image-20200503093629859" style="zoom:50%;" />
-
-<p>由于攻击 template 和攻击 search regions 的过程非常相似，因此仅讨论攻击搜索区域：</p>
-<ol>
-<li><p>在训练过程中，首先将 $N$ 个预先裁剪好的未被扰动的搜索区域送入 perturbation-generator，从而向搜索区域添加难以察觉的噪声。</p>
-</li>
-<li><p>然后，将 perturbed search regions 与 clean template 送入 siamrpn++，生成 adversarial classification/regression maps。</p>
-</li>
-<li><p>Adversarial heatmaps 中的目标区域希望有较低的响应值。</p>
-</li>
-<li><p>为了得到这些区域，将 unperturbed search regions 送入网络，得到 clean heatmaps。</p>
-</li>
-<li><p>通过 adversarial cooling-shrinking loss 和 L2 loss 训练 perturbation-generator。</p>
-</li>
-</ol>
-<h3 id="Cooling-Shrinking-Loss"><a href="#Cooling-Shrinking-Loss" class="headerlink" title="Cooling-Shrinking Loss"></a>Cooling-Shrinking Loss</h3><p>Cooling-shrinking loss 包括两部分：</p>
-<ol>
-<li>cooling loss $L_C$：用于  heatmaps $M_H$。冷却 heatmap 中存在目标的 hot regions。导致跟踪器丢失目标。</li>
-<li>shrinking loss $L_S$：用于 regression maps $M_R$。缩小目标边框，引起累计误差，导致跟踪失败。</li>
-</ol>
-<p>为了确定目标的位置，引入 clean heatmaps $M^c_H$。</p>
-<p>为了便于计算，将 heatmaps 转换成二维矩阵：</p>
-<ol>
-<li>clean heatmaps $M^c_H\rightarrow \widetilde{M^c_H}\in \mathbb R^{N\times2}$。</li>
-<li>adversarial heatmaps $M^a_H\rightarrow \widetilde{M^a_H}\in \mathbb R^{N\times2}$。</li>
-<li>adversarial regression maps $M^a_R\rightarrow \widetilde{M^a_R}\in \mathbb R^{N\times4}$。</li>
-</ol>
-<p>对 clean heatmaps 进行 softmax 并使用阈值得到 binary attention maps $\mathcal A$ 用于确定前景和背景。</p>
-<p>算法流程为：</p>
-<img src="https://i.loli.net/2020/05/03/WXc13NhlDATfyKw.png" alt="image-20200503102021919" style="zoom:50%;" />
-
-<h3 id="Implementation-Details"><a href="#Implementation-Details" class="headerlink" title="Implementation Details"></a>Implementation Details</h3><h4 id="Network-Architectures"><a href="#Network-Architectures" class="headerlink" title="Network Architectures"></a>Network Architectures</h4><p>Perturbation-generator 采用 U-Net 架构。</p>
-<p>网络通过 cooling loss、shrinking loss 和 L2 loss 训练，权重分别为 0.1，1 和 500。</p>
-<h2 id="Experiments"><a href="#Experiments" class="headerlink" title="Experiments"></a>Experiments</h2><h3 id="Adversarial-Attack-to-SiamRPNpp"><a href="#Adversarial-Attack-to-SiamRPNpp" class="headerlink" title="Adversarial Attack to SiamRPNpp"></a>Adversarial Attack to SiamRPNpp</h3><p>进行如下三组实验：</p>
-<ol>
-<li>仅攻击 search region</li>
-<li>仅攻击 template</li>
-<li>同时攻击 search region 和 template</li>
-</ol>
-<h3 id="Ablation-Study"><a href="#Ablation-Study" class="headerlink" title="Ablation Study"></a>Ablation Study</h3><h4 id="Influence-of-Shrinking-Loss"><a href="#Influence-of-Shrinking-Loss" class="headerlink" title="Influence of Shrinking Loss"></a>Influence of Shrinking Loss</h4><p>进行三组对比试验：</p>
-<ol>
-<li>G-Template vs. G-Template-Regress</li>
-<li>G-Search vs. G-Search-Regress</li>
-<li>G-Template-Search vs. GTemplate-Search-Regress</li>
-</ol>
-<p>结论：shrinking loss 有助于攻击 search regions，但对攻击 template 可能有害。</p>
-<h4 id="Influence-of-a-Discriminator"><a href="#Influence-of-a-Discriminator" class="headerlink" title="Influence of a Discriminator"></a>Influence of a Discriminator</h4><p>并未进行实验，只是说明，不使用 discriminator，对抗样本的扰动也是难以察觉的。</p>
-<h3 id="Further-Discussions"><a href="#Further-Discussions" class="headerlink" title="Further Discussions"></a>Further Discussions</h3><h4 id="Noise-Pattern"><a href="#Noise-Pattern" class="headerlink" title="Noise Pattern"></a>Noise Pattern</h4><p>如图 10 所示，扰动主要集中在被跟踪的目标上，而其他区域几乎不受扰动。</p>
-<img src="https://i.loli.net/2020/05/03/ALdcw79a1touTHe.png" alt="image-20200503101605838" style="zoom:50%;" />
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1458,7 +1408,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">122</span>
+          <span class="site-state-item-count">123</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
