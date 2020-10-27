@@ -203,6 +203,131 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/08/14/ECCV2020-Efficient-Adversarial-Attacks-for-Visual-Object-Tracking/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="zhbli">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="zhbli">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/08/14/ECCV2020-Efficient-Adversarial-Attacks-for-Visual-Object-Tracking/" class="post-title-link" itemprop="url">[ECCV2020] Efficient Adversarial Attacks for Visual Object Tracking</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-08-14 10:08:40" itemprop="dateCreated datePublished" datetime="2020-08-14T10:08:40+08:00">2020-08-14</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-08-15 14:53:42" itemprop="dateModified" datetime="2020-08-15T14:53:42+08:00">2020-08-15</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Tracking/" itemprop="url" rel="index"><span itemprop="name">Tracking</span></a>
+                </span>
+                  , 
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Tracking/Adversarial-Attack/" itemprop="url" rel="index"><span itemprop="name">Adversarial Attack</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><p>Targeted Attack: embedded feature loss.</p>
+<p>Untargeted Attack: drift loss.</p>
+<p>generator: 用于生成对抗扰动。</p>
+<h2 id="Related-Work"><a href="#Related-Work" class="headerlink" title="Related Work"></a>Related Work</h2><h3 id="Iterative-and-Generative-Adversary"><a href="#Iterative-and-Generative-Adversary" class="headerlink" title="Iterative and Generative Adversary"></a>Iterative and Generative Adversary</h3><p>现有的对抗攻击主要基于<strong>优化算法</strong>和<strong>生成算法</strong>。</p>
+<ul>
+<li>基于优化的对抗攻击通过计算DNN的梯度发现噪声的方向。</li>
+<li>基于generator的对抗攻击包括GAP、UEA等。</li>
+</ul>
+<h2 id="Generating-Adversarial-Examples"><a href="#Generating-Adversarial-Examples" class="headerlink" title="Generating Adversarial Examples"></a>Generating Adversarial Examples</h2><img src="https://i.loli.net/2020/08/14/ZEr2qMc1aI4HoKy.png" alt="image-20200814125115034" style="zoom:50%;" />
+
+<h3 id="Problem-Definition"><a href="#Problem-Definition" class="headerlink" title="Problem Definition"></a>Problem Definition</h3><p>$V={I_1,…,I_i,…,I_n}$ 是具有 $n$ 帧的一段视频。$B^{gt}={b_1,…,b_i,…,b_n}$ 是对应的 ground truth。预测的边框记为 $B^{pred}$。</p>
+<p>$f_\theta(\cdot)$ 为跟踪器，$I_R$ 为 reference frame，$b^{init}$ 为第一帧的边框，$z=\tau(I_R,b^{init})$ 是 exemplar region; $I_C$ 为 candidate frame，$x=\tau(I_C,b^{search})$ 为 candidate region。</p>
+<p>$\hat V={\hat I_1,…,\hat I_i,…,\hat I_n}$ 是对抗视频。<strong>生成器的作用是：攻击 candidate region</strong> $\hat x_i = \tau(\hat I_i,b_i^{search})$。</p>
+<h4 id="攻击类型定义"><a href="#攻击类型定义" class="headerlink" title="攻击类型定义"></a>攻击类型定义</h4><p><strong>Targeted Attack</strong>：对抗视频引导跟踪器沿指定轨迹$C^{spec}$跟踪目标。</p>
+<p><strong>Untargeted Attack</strong>：对抗视频导致跟踪轨迹偏离真实目标。当 IoU 为 0 时，认为跟踪成功。    </p>
+<h3 id="Drift-Loss-Attack"><a href="#Drift-Loss-Attack" class="headerlink" title="Drift Loss Attack"></a>Drift Loss Attack</h3><p>我们提出 drift loss，用于生成对抗扰动，使得孪生网络的响应图发生偏移。</p>
+<p>首先定义</p>
+<img src="https://i.loli.net/2020/08/14/vGAmyM8lJopWSUa.png" alt="image-20200814105339752" style="zoom:50%;" />
+
+<p>其中 $s$ 表示 response score，$y$ 表示对应的 label。</p>
+<img src="https://i.loli.net/2020/08/14/ojbaHcY2ZQd8R5U.png" alt="image-20200814111624217" style="zoom:50%;" />
+
+<p>其中 $\mathcal G$ 指的是 generator。</p>
+<p>上述公式的含义为：希望非中心区域的最大响应比中心区域的最大响应大。（公式中的min可能写错了）</p>
+<img src="https://i.loli.net/2020/08/14/xaEjvy23c1owSrO.png" alt="image-20200814111413309" style="zoom:50%;" />
+
+<p>上述公式的含义为：希望非中心区域的最大响应位置距离中心区域的最大相应位置更远。</p>
+<img src="https://i.loli.net/2020/08/14/qaoWkJwDYt7Vfbg.png" alt="image-20200814111442203" style="zoom:50%;" />
+
+<p>上述公式的含义为：求中心/非中心区域的最大响应位置。</p>
+<img src="https://i.loli.net/2020/08/14/tn4KruPacCpm5e7.png" alt="image-20200814111341425" style="zoom:50%;" />
+
+<h3 id="Embedded-Feature-Loss-Attack"><a href="#Embedded-Feature-Loss-Attack" class="headerlink" title="Embedded Feature Loss Attack"></a>Embedded Feature Loss Attack</h3><p>我们希望获得对抗性的 exemplar，并最小化其与特定轨迹区域之间的L2距离。因此，我们提出 embedded feature loss，以生成<strong>对抗图像</strong> $\hat z$ 和 $\hat x_{R+1}$。对抗样本的特征与 embedded image $e$ 接近：</p>
+<img src="https://i.loli.net/2020/08/14/Yih7UTFdl9BD1k5.png" alt="image-20200814123403528" style="zoom:50%;" />
+
+<p>其中，$e$ 表示指定的轨迹区域，$q\in {z,x_{R+1}}$ 分别表示 exemplar frame 和需要跟踪的 $R+1$ 帧。$\varphi$ 表示特征函数，$\mathcal G$ <strong>表示对抗扰动。</strong></p>
+<p>训练时，embedded images 的选择非常重要。</p>
+<h3 id="Unified-and-Real-time-Adversary"><a href="#Unified-and-Real-time-Adversary" class="headerlink" title="Unified and Real-time Adversary"></a>Unified and Real-time Adversary</h3><p>使用 GAN 生成对抗样本，具体来说，使用 cycle GAN 学习从图像到对抗扰动的映射。</p>
+<p>对于判别器，使用 PatchGAN，损失函数为：</p>
+<img src="https://i.loli.net/2020/08/14/BhWkM1ouptO4e6C.png" alt="image-20200814124938815" style="zoom:50%;" />
+
+<p>为了使生成器生成的图像更加真实，生成器的损失可以表示为：</p>
+<img src="https://i.loli.net/2020/08/14/LfEkDRI2ciKmqVw.png" alt="image-20200814125404494" style="zoom:50%;" />
+
+<p>另外，使用L2距离作为损失，使得对抗图像与原始图像尽量相似：</p>
+<img src="https://i.loli.net/2020/08/14/YRKO4ehUgjF5HJ1.png" alt="image-20200814125548908" style="zoom:50%;" />
+
+<p>生成器的完整损失函数为：</p>
+<img src="https://i.loli.net/2020/08/14/F5ZigmRwTQEcdzy.png" alt="image-20200814125635173" style="zoom:50%;" />
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/07/30/CVPR2020-Temporally-Distributed-Networks-for-Fast-Video-Segmentation/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1029,80 +1154,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/07/17/CVPR2017-Learning-video-object-segmentation-from-static-images/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="zhbli">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="zhbli">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/07/17/CVPR2017-Learning-video-object-segmentation-from-static-images/" class="post-title-link" itemprop="url">[CVPR2017] Learning video object segmentation from static images</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-              
-
-              <time title="Created: 2020-07-17 11:37:04 / Modified: 20:08:42" itemprop="dateCreated datePublished" datetime="2020-07-17T11:37:04+08:00">2020-07-17</time>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="Abstract"><a href="#Abstract" class="headerlink" title="Abstract"></a>Abstract</h2><p>离线学习和在线学习相结合</p>
-<ul>
-<li>离线学习：根据上一帧预测的mask，生成当前帧的mask。具体而言，对图片的mask进行变形/粗化<code>coarsening</code>，再对网络进行训练，从而利用不精确的mask预测精确的mask。</li>
-<li>在线学习：捕获特定目标的表观。</li>
-</ul>
-<h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><p>先前的算法通过 CRF-like 或 GrabCut-like 等技术传播第一帧的分割结果。</p>
-<blockquote>
-<p>[26] N. Maerki, F. Perazzi, O. Wang, and A. Sorkine-Hornung. <strong>Bilateral space video segmentation</strong>. In CVPR, 2016. 1, 2, 5, 6, 7, 11, 12, 13</p>
-<p>[44] Y.-H. Tsai, M.-H. Yang, and M. J. Black. <strong>Video segmentation via object flow</strong>. In CVPR, 2016. 1, 2, 5, 6, 7, 11, 12, 13</p>
-</blockquote>
-<p>对于每一帧，利用上一帧预测的mask，将网络引向感兴趣的目标。</p>
-<h2 id="Method"><a href="#Method" class="headerlink" title="Method"></a>Method</h2><img src="https://i.loli.net/2020/07/17/MQx9JmzZlf8eoIa.png" alt="image-20200717142022144" style="zoom: 33%;" />
-
-<h3 id="Learning-to-segment-instances-offline"><a href="#Learning-to-segment-instances-offline" class="headerlink" title="Learning to segment instances offline"></a>Learning to segment instances offline</h3><p>将分割网络输入从RGB扩展到RGB + mask通道（4个通道）。额外的mask通道为上一帧的分割结果，用于估计当前帧中目标的大概位置和形状。</p>
-<p>分割过程包括两个步骤：粗化先前帧的mask，送入训好的网络以估计当前帧的mask。</p>
-<h3 id="Learning-to-segment-instances-online"><a href="#Learning-to-segment-instances-online" class="headerlink" title="Learning to segment instances online"></a>Learning to segment instances online</h3><p>利用第一帧产生约1000个训练样本，然后继续微调先前离线训练的模型。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1172,7 +1223,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">123</span>
+          <span class="site-state-item-count">124</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
